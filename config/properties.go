@@ -1,12 +1,12 @@
 package config
 
 const (
-	ARIApplication  = "ari.application"
+	ARIApplication       = "ari.application"
 	ARISnoopyApplication = "ari.snoopy_application"
-	ARIUrl          = "ari.url"
-	ARIWebsocketUrl = "ari.ws_url"
-	ARIUser         = "ari.user"
-	ARIPassword     = "ari.password"
+	ARIUrl               = "ari.url"
+	ARIWebsocketUrl      = "ari.ws_url"
+	ARIUser              = "ari.user"
+	ARIPassword          = "ari.password"
 
 	LogFile  = "log.file"
 	LogLevel = "log.level"
