@@ -6,5 +6,8 @@ import (
 )
 
 func New() *repository.Repositories {
-	return &repository.Repositories{Bridge: &memory.Bridge{}}
+	return &repository.Repositories{
+		Bridge: &memory.Bridge{},
+		AsteriskAccount: memory.NewAsteriskAccountMemory(),
+	}
 }

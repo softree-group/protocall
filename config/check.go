@@ -71,5 +71,7 @@ func checkConfig() {
 	equal(ARIUser, "", fatal, "Не указан пользователь астериска")
 	equal(ARIPassword, "", fatal, "Не указан пароль пользователя астериска")
 
+	equal(ServerAPIKey, "", fatal, "Не указан api_key")
+
 	processErrors(errors)
 }

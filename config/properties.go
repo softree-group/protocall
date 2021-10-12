@@ -10,4 +10,8 @@ const (
 
 	LogFile  = "log.file"
 	LogLevel = "log.level"
+
+	ServerPort = "server.port"
+	ServerIP = "server.ip"
+	ServerAPIKey = "server.api_key"
 )
