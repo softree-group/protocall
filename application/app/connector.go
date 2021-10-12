@@ -3,14 +3,36 @@ package app
 import (
 	"github.com/CyCoreSystems/ari/v5"
 	"protocall/application/applications"
+	"protocall/domain/repository"
 )
 
 type Connector struct {
-	ari ari.Client
+	ari         ari.Client
+	bridgeStore repository.Bridge
 }
 
-func NewConnector(client ari.Client) *Connector {
-	return &Connector{ari: client}
+func NewConnector(client ari.Client, bridgeStore repository.Bridge) *Connector {
+	return &Connector{ari: client, bridgeStore: bridgeStore}
+}
+
+func (c Connector) CreateBridgeFrom(channel *ari.ChannelHandle) (*ari.BridgeHandle, error) {
+
+	key := channel.Key().New(ari.BridgeKey, channel.ID())
+
+	bridge, err := c.ari.Bridge().Create(key, "mixing", key.ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	c.bridgeStore.Create(channel.ID(), bridge.ID())
+
+	return bridge, nil
+}
+
+func (c Connector) HasBridge() bool {
+	bID, _ := c.bridgeStore.GetForHost("some")
+	return bID != ""
 }
 
 func (c Connector) CreateBridge() (*ari.BridgeHandle, error) {

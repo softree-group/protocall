@@ -12,9 +12,8 @@ import (
 )
 
 type Applications struct {
-	Listener  applications.EventListener
-	Connector applications.Connector
-	Snoopy    applications.Snoopy
+	Listener applications.EventListener
+	Snoopy   applications.Snoopy
 }
 
 func New(reps *repository.Repositories) *Applications {
@@ -33,8 +32,7 @@ func New(reps *repository.Repositories) *Applications {
 	}
 
 	return &Applications{
-		Listener:  app.NewListener(ariClient, app.NewHandler(ariClient, reps)),
-		Connector: app.NewConnector(ariClient),
-		Snoopy:    snoopy.New(),
+		Listener: app.NewListener(ariClient, app.NewHandler(ariClient, reps, app.NewConnector(ariClient, reps.Bridge))),
+		Snoopy:   snoopy.New(),
 	}
 }

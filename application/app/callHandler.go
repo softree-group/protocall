@@ -8,28 +8,36 @@ import (
 )
 
 type CallHandler struct {
-	reps *repository.Repositories
-	ari  ari.Client
+	reps      *repository.Repositories
+	ari       ari.Client
+	connector applications.Connector
 }
 
-func NewHandler(client ari.Client, reps *repository.Repositories) *CallHandler {
+func NewHandler(client ari.Client, reps *repository.Repositories, connector applications.Connector) *CallHandler {
 	return &CallHandler{
-		reps: reps,
-		ari:  client,
+		reps:      reps,
+		ari:       client,
+		connector: connector,
 	}
 }
 
 func (c CallHandler) Handle(channel *ari.ChannelHandle) {
 	bridgeID, err := c.reps.Bridge.GetForHost("some")
+	logrus.Info("GET: ", bridgeID)
 	if err != nil {
 		logrus.Error("no bridge")
 		return
 	}
-
-	bridge := c.ari.Bridge().Get(channel.Key().New(ari.BridgeKey, bridgeID))
-	if bridge == nil {
-		logrus.Error("no bridge ", bridgeID)
-		return
+	var bridge *ari.BridgeHandle
+	if bridgeID == "" {
+		bridge, err = c.connector.CreateBridgeFrom(channel)
+		logrus.Info("CREATED: ", bridge.ID())
+		if err != nil {
+			logrus.Error("IN CREATED: ", err)
+		}
+	} else {
+		bridge = c.ari.Bridge().Get(channel.Key().New(ari.BridgeKey, bridgeID))
+		logrus.Info("GET: ", bridge.ID())
 	}
 
 	_ = channel.Answer()
@@ -38,12 +46,15 @@ func (c CallHandler) Handle(channel *ari.ChannelHandle) {
 
 	err = bridge.AddChannel(channel.ID())
 	if err != nil {
-		logrus.Error("cannot connect ", channel.ID(), " to bridge ", bridgeID)
+		logrus.Error("cannot connect ", channel.ID(), " to bridge ", bridge.ID(), " err: ", err)
 		return
 	}
 
 	end := channel.Subscribe(ari.Events.ChannelLeftBridge)
 	anyEvent := channel.Subscribe(ari.Events.All)
+
+	data, err := channel.Data()
+	logrus.Infof("DATA: %v+", data)
 
 	_, err = channel.Snoop("snoop_"+channel.ID(), &ari.SnoopOptions{
 		App:     "snoopy",
