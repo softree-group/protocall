@@ -1,2 +1,5 @@
 config.yaml
 .idea
+.env
+.DS_Store
+vendor/

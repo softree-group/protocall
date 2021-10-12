@@ -1,14 +1,15 @@
 package application
 
 import (
-	"github.com/CyCoreSystems/ari/v5/client/native"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"protocall/application/app"
 	"protocall/application/app/snoopy"
 	"protocall/application/applications"
 	"protocall/config"
 	"protocall/domain/repository"
+
+	"github.com/CyCoreSystems/ari/v5/client/native"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 type Applications struct {
@@ -18,6 +19,7 @@ type Applications struct {
 	AsteriskAccount applications.AsteriskAccount
 	Conference      applications.Conference
 	Connector       applications.Connector
+	Voice           app.Voice
 }
 
 func New(reps *repository.Repositories) *Applications {
@@ -30,12 +32,22 @@ func New(reps *repository.Repositories) *Applications {
 		Password:     viper.GetString(config.ARIPassword),
 	})
 	logrus.Info("end connect")
-
 	if err != nil {
 		logrus.Fatal("cannot connect to asterisk: ", err)
 	}
 
 	connector := app.NewConnector(ariClient, reps.Bridge)
+
+	// storage, err := storage.NewStorage(&storage.Config{})
+	// if err != nil {
+	// 	logrus.Fatal("cannot connect to s3: ", err)
+	// 	return err
+	// }
+
+	// r, err := recognizer.New
+	// if err != nil {
+	// 	return
+	// }
 
 	return &Applications{
 		Listener:        app.NewListener(reps, ariClient, app.NewHandler(ariClient, reps, connector)),
@@ -44,5 +56,6 @@ func New(reps *repository.Repositories) *Applications {
 		AsteriskAccount: app.NewAsteriskAccount(reps),
 		User:            app.NewUser(reps),
 		Connector:       connector,
+		// Voice:           app.Voice{storage},
 	}
 }
