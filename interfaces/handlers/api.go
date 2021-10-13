@@ -31,8 +31,6 @@ func ServeAPI(apps *application.Applications) {
 	startServer(r)
 }
 
-
-
 func startServer(r *router.Router) {
 	logrus.Infof("Запуск сервера на %s:%s ...", viper.Get(config.ServerIP), viper.Get(config.ServerPort))
 
