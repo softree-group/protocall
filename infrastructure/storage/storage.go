@@ -4,14 +4,12 @@ import (
 	"context"
 	"io"
 	"os"
-	"protocall/domain/repository"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-
-	"protocall/domain/repository"
 )
 
 type Config struct {
@@ -57,22 +55,28 @@ func (s *Storage) Download(ctx context.Context, filename string) ([]byte, error)
 }
 
 type Storage struct {
-	downloader *s3manager.Downloader
-	config     *Config
+	sess   *session.Session
+	config *Config
 }
 
-func NewStorage(c *Config) repository.VoiceStorage {
+func NewStorage(c *Config) (*Storage, error) {
+	sess := session.Must(session.NewSession(&aws.Config{
+		Region:   aws.String("us-west-2"),
+		Endpoint: &c.Endpoint,
+	}))
+
+	creds := stscreds.NewCredentials(sess, "recognizer")
+
 	return &Storage{
-		downloader: s3manager.NewDownloader(
-			s3.New(session.New(&aws.Config{})),
-		),
+		sess:   sess,
 		config: c,
-	}
+	}, nil
 }
 
 func (s *Storage) GetRecord(ctx context.Context, filename string) ([]byte, error) {
-	var res []byte
-	_, err := s.downloader.DownloadWithContext(
+	d := s3manager.NewDownloader(s.sess)
+	res := aws.NewWriteAtBuffer([]byte{})
+	_, err := d.DownloadWithContext(
 		ctx,
 		res,
 		&s3.GetObjectInput{
@@ -96,5 +100,4 @@ func (s *Storage) Upload(ctx context.Context, file *os.File) error {
 		return err
 	}
 	return nil
-	return res, nil
 }
