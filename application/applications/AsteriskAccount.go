@@ -1,10 +1,10 @@
-package repository
+package applications
 
 import "protocall/domain/entity"
 
-type AsteriskAccountRepository interface {
-	Get(account string) *entity.AsteriskAccount
+type AsteriskAccount interface {
 	GetFree() *entity.AsteriskAccount
+	Get(account string) *entity.AsteriskAccount
 	Take(account string, userID string)
 	Free(account string)
 }

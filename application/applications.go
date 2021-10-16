@@ -12,8 +12,12 @@ import (
 )
 
 type Applications struct {
-	Listener applications.EventListener
-	Snoopy   applications.Snoopy
+	Listener        applications.EventListener
+	Snoopy          applications.Snoopy
+	User            applications.User
+	AsteriskAccount applications.AsteriskAccount
+	Conference      applications.Conference
+	Connector       applications.Connector
 }
 
 func New(reps *repository.Repositories) *Applications {
@@ -31,8 +35,14 @@ func New(reps *repository.Repositories) *Applications {
 		logrus.Fatal("cannot connect to asterisk: ", err)
 	}
 
+	connector := app.NewConnector(ariClient, reps.Bridge)
+
 	return &Applications{
-		Listener: app.NewListener(ariClient, app.NewHandler(ariClient, reps, app.NewConnector(ariClient, reps.Bridge))),
-		Snoopy:   snoopy.New(),
+		Listener:        app.NewListener(ariClient, app.NewHandler(ariClient, reps, connector)),
+		Snoopy:          snoopy.New(),
+		Conference:      app.NewConference(reps),
+		AsteriskAccount: app.NewAsteriskAccount(reps),
+		User:            app.NewUser(reps),
+		Connector:       connector,
 	}
 }

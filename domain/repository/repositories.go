@@ -1,6 +1,8 @@
 package repository
 
 type Repositories struct {
-	Bridge Bridge
+	Bridge          Bridge
 	AsteriskAccount AsteriskAccountRepository
+	User            User
+	Conference      Conference
 }
