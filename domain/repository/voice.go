@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"protocall/domain/entity"
+	"protocall/infrastructure/storage"
 )
 
 type Voice interface {
@@ -10,7 +11,8 @@ type Voice interface {
 }
 
 type VoiceStorage interface {
-	GetRecord(context.Context, string) ([]byte, error)
+	UploadFile(bucketName string, remotePath string, localPath string, options storage.UploadFileOptions) (string, error)
+	DownloadFile(bucketName string, remotePath string, versionID string, localPath string) error
 }
 
 type VoiceRecognizer interface {

@@ -3,9 +3,10 @@ package storage
 import (
 	"context"
 	"io"
+	"os"
+	"protocall/domain/repository"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
@@ -18,18 +19,28 @@ type Config struct {
 	Key      string
 }
 
-type Storage struct {
-	sess   *session.Session
-	config *Config
+type s3client struct {
+	client  *s3.S3
+	session *session.Session
+
+	progressOutput io.Writer
 }
 
-func NewStorage(c *Config) (*Storage, error) {
+type UploadFileOptions struct {
+	Acl                  string
+	ServerSideEncryption string
+	KmsKeyId             string
+	ContentType          string
+	DisableMultipart     bool
+}
+
+func NewStorage(c *Config) (repository.VoiceStorage, error) {
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region:   aws.String("us-west-2"),
 		Endpoint: &c.Endpoint,
 	}))
 
-	creds := stscreds.NewCredentials(sess, "recognizer")
+	// creds := stscreds.NewCredentials(sess, "recognizer")
 
 	return &Storage{
 		sess:   sess,
@@ -37,7 +48,7 @@ func NewStorage(c *Config) (*Storage, error) {
 	}, nil
 }
 
-func (s *Storage) GetRecord(ctx context.Context, filename string) ([]byte, error) {
+func (s *Storage) Download(ctx context.Context, filename string) ([]byte, error) {
 	d := s3manager.NewDownloader(s.sess)
 	res := aws.NewWriteAtBuffer([]byte{})
 	_, err := d.DownloadWithContext(
@@ -54,11 +65,11 @@ func (s *Storage) GetRecord(ctx context.Context, filename string) ([]byte, error
 	return res.Bytes(), nil
 }
 
-func (s *Storage) UploadRecord(ctx context.Context, filename string, file io.Reader) error {
+func (s *Storage) Upload(ctx context.Context, file *os.File) error {
 	u := s3manager.NewUploader(s.sess)
 	if _, err := u.UploadWithContext(ctx, &s3manager.UploadInput{
 		Bucket: aws.String(s.config.Bucket),
-		Key:    aws.String(filename),
+		Key:    aws.String(file.Name()),
 		Body:   file,
 	}); err != nil {
 		return err
