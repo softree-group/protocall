@@ -2,12 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/hashicorp/go-uuid"
-	"github.com/spf13/viper"
 	"github.com/valyala/fasthttp"
 	"protocall/application"
-	"protocall/config"
-	"time"
 )
 
 func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
