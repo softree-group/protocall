@@ -10,6 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+
+	"protocall/domain/repository"
 )
 
 type Config struct {
@@ -52,6 +54,25 @@ func (s *Storage) Download(ctx context.Context, filename string) ([]byte, error)
 	d := s3manager.NewDownloader(s.sess)
 	res := aws.NewWriteAtBuffer([]byte{})
 	_, err := d.DownloadWithContext(
+}
+
+type Storage struct {
+	downloader *s3manager.Downloader
+	config     *Config
+}
+
+func NewStorage(c *Config) repository.VoiceStorage {
+	return &Storage{
+		downloader: s3manager.NewDownloader(
+			s3.New(session.New(&aws.Config{})),
+		),
+		config: c,
+	}
+}
+
+func (s *Storage) GetRecord(ctx context.Context, filename string) ([]byte, error) {
+	var res []byte
+	_, err := s.downloader.DownloadWithContext(
 		ctx,
 		res,
 		&s3.GetObjectInput{
@@ -75,4 +96,5 @@ func (s *Storage) Upload(ctx context.Context, file *os.File) error {
 		return err
 	}
 	return nil
+	return res, nil
 }
