@@ -21,6 +21,7 @@ type Applications struct {
 	AsteriskAccount applications.AsteriskAccount
 	Conference      applications.Conference
 	Connector       applications.Connector
+	Voice    app.Voice
 }
 
 func New(reps *repository.Repositories) *Applications {
@@ -45,6 +46,15 @@ func New(reps *repository.Repositories) *Applications {
 	r, err := recognizer.New
 	connector := app.NewConnector(ariClient, reps.Bridge)
 
+	storage, err := storage.NewStorage(&storage.Config{
+
+	})
+	if err != nil {
+		logrus.Fatal("cannot connect to s3: ", err)
+	}
+
+	r, err := recognizer.New
+
 	return &Applications{
 		Listener:        app.NewListener(ariClient, app.NewHandler(ariClient, reps, connector)),
 		Snoopy:          snoopy.New(),
@@ -52,5 +62,4 @@ func New(reps *repository.Repositories) *Applications {
 		AsteriskAccount: app.NewAsteriskAccount(reps),
 		User:            app.NewUser(reps),
 		Connector:       connector,
-	}
 }
