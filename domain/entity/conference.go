@@ -7,7 +7,10 @@ type Conference struct {
 	Participants []*User `json:"participants"`
 	HostUserID   string  `json:"host_user_id"`
 	BridgeID     string  `json:"-"`
+<<<<<<< HEAD
 	IsRecording  bool    `json:"is_recording"`
+=======
+>>>>>>> 977da2b (rebase inbloud)
 }
 
 func (c Conference) Less(then btree.Item) bool {

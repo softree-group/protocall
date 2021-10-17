@@ -2,19 +2,15 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/sirupsen/logrus"
+	"github.com/hashicorp/go-uuid"
+	"github.com/spf13/viper"
 	"github.com/valyala/fasthttp"
 	"protocall/application"
-	"protocall/domain/entity"
+	"protocall/config"
+	"time"
 )
 
 func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
-	user := getUser(ctx, apps)
-	if user != nil {
-		ctx.Error("You are already signed in", 400)
-		return
-	}
-
 	user, account := createSession(ctx, apps)
 	if user == nil {
 		return
@@ -43,7 +39,10 @@ func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	}
 
 	ctx.Response.SetBody(data)
+<<<<<<< HEAD
 	ctx.Response.Header.SetContentType("application/json")
+=======
+>>>>>>> 977da2b (rebase inbloud)
 }
 
 func join(ctx *fasthttp.RequestCtx, apps *application.Applications) {
@@ -75,6 +74,7 @@ func join(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	}
 
 	ctx.Response.SetBody(data)
+<<<<<<< HEAD
 	ctx.Response.Header.SetContentType("application/json")
 }
 
@@ -121,10 +121,18 @@ func ready(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	user := getUser(ctx, apps)
 	if user == nil {
+=======
+}
+
+func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
+	sessionID := ctx.Request.Header.Cookie(sessionCookie)
+	if len(sessionID) == 0 {
+>>>>>>> 977da2b (rebase inbloud)
 		ctx.SetStatusCode(400)
 		return
 	}
 
+<<<<<<< HEAD
 	err := apps.Connector.Disconnect(user.ConferenceID, user.Channel)
 	if err != nil {
 		logrus.Error("Fail to disconnect: ", err)
@@ -143,3 +151,8 @@ func record(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		return
 	}
 }
+=======
+	apps.User.Delete(string(sessionID))
+	ctx.Response.Header.DelCookie(sessionCookie)
+}
+>>>>>>> 977da2b (rebase inbloud)
