@@ -26,4 +26,5 @@ func serverDefaults() {
 	viper.SetDefault(ServerAPIKey, "")
 	viper.SetDefault(ServerIP, "0.0.0.0")
 	viper.SetDefault(ServerPort, "9595")
+	viper.SetDefault(ServerDomain, "")
 }

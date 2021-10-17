@@ -14,9 +14,13 @@ import (
 )
 
 type Applications struct {
-	Listener applications.EventListener
-	Snoopy   applications.Snoopy
-	Voice    app.Voice
+	Voice           app.Voice
+	Listener        applications.EventListener
+	Snoopy          applications.Snoopy
+	User            applications.User
+	AsteriskAccount applications.AsteriskAccount
+	Conference      applications.Conference
+	Connector       applications.Connector
 }
 
 func New(reps *repository.Repositories) *Applications {
@@ -33,18 +37,20 @@ func New(reps *repository.Repositories) *Applications {
 		logrus.Fatal("cannot connect to asterisk: ", err)
 	}
 
-	storage, err := storage.NewStorage(&storage.Config{
-
-	})
+	storage, err := storage.NewStorage(&storage.Config{})
 	if err != nil {
 		logrus.Fatal("cannot connect to s3: ", err)
 	}
 
 	r, err := recognizer.New
+	connector := app.NewConnector(ariClient, reps.Bridge)
 
 	return &Applications{
-		Listener: app.NewListener(ariClient, app.NewHandler(ariClient, reps, app.NewConnector(ariClient, reps.Bridge))),
-		Snoopy:   snoopy.New(),
-		Voice:    app.NewVoice(),
+		Listener:        app.NewListener(ariClient, app.NewHandler(ariClient, reps, connector)),
+		Snoopy:          snoopy.New(),
+		Conference:      app.NewConference(reps),
+		AsteriskAccount: app.NewAsteriskAccount(reps),
+		User:            app.NewUser(reps),
+		Connector:       connector,
 	}
 }

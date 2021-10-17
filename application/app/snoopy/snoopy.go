@@ -36,7 +36,7 @@ func (s Snoopy) channelHandler(channel *ari.ChannelHandle) {
 	defer end.Cancel()
 
 	ctx := context.Background()
-	rec := record.Record(ctx, channel, record.Format("ogg"))
+	rec := record.Record(ctx, channel)
 
 	for {
 		select {

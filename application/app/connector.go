@@ -35,11 +35,11 @@ func (c Connector) HasBridge() bool {
 	return bID != ""
 }
 
-func (c Connector) CreateBridge() (*ari.BridgeHandle, error) {
+func (c Connector) CreateBridge(ID string) (*ari.BridgeHandle, error) {
 
 	key := &ari.Key{
 		Kind:                 ari.BridgeKey,
-		ID:                   "some",
+		ID:                   ID,
 		Node:                 "",
 		Dialog:               "",
 		App:                  "protocall",
