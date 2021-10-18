@@ -11,9 +11,8 @@ type Voice interface {
 }
 
 type VoiceStorage interface {
-	UploadFile(bucketName string, remotePath string, localPath string, options storage.UploadFileOptions) (string, error)
+	UploadFile(bucketName string, remotePath string, localPath string) (string, error)
 	DownloadFile(bucketName string, remotePath string, versionID string, localPath string) error
-	GetRecord(context.Context, string) ([]byte, error)
 }
 
 type VoiceRecognizer interface {
