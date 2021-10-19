@@ -2,11 +2,19 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/sirupsen/logrus"
 	"github.com/valyala/fasthttp"
 	"protocall/application"
+	"protocall/domain/entity"
 )
 
 func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
+	user := getUser(ctx, apps)
+	if user != nil {
+		ctx.Error("You are already signed in", 400)
+		return
+	}
+
 	user, account := createSession(ctx, apps)
 	if user == nil {
 		return
@@ -35,6 +43,7 @@ func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	}
 
 	ctx.Response.SetBody(data)
+	ctx.Response.Header.SetContentType("application/json")
 }
 
 func join(ctx *fasthttp.RequestCtx, apps *application.Applications) {
@@ -66,15 +75,71 @@ func join(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	}
 
 	ctx.Response.SetBody(data)
+	ctx.Response.Header.SetContentType("application/json")
+}
+
+func getUser(ctx *fasthttp.RequestCtx, apps *application.Applications) *entity.User {
+	sessionID := ctx.Request.Header.Cookie(sessionCookie)
+	if len(sessionID) == 0 {
+		return nil
+	}
+
+	return apps.User.Find(string(sessionID))
+}
+
+func ready(ctx *fasthttp.RequestCtx, apps *application.Applications) {
+	user := getUser(ctx, apps)
+	if user == nil {
+		ctx.Error("no session", 400)
+		return
+	}
+
+	channel, err := apps.Connector.CallAndConnect(user.AsteriskAccount, user.ConferenceID)
+	if err != nil {
+		ctx.Error(err.Error(), 400)
+		return
+	}
+
+	user.Channel = channel
+	apps.User.Save(user)
+
+	conference := apps.Conference.Get(user.ConferenceID)
+	if conference == nil {
+		logrus.Error("fail to get conference ", user.ConferenceID)
+		return
+	}
+
+	if conference.IsRecording {
+		err = apps.Conference.StartRecordUser(user, conference.ID)
+		if err != nil {
+			logrus.Error("fail to start record user: ", err)
+			return
+		}
+	}
 }
 
 func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
-	sessionID := ctx.Request.Header.Cookie(sessionCookie)
-	if len(sessionID) == 0 {
+	user := getUser(ctx, apps)
+	if user == nil {
 		ctx.SetStatusCode(400)
 		return
 	}
 
-	apps.User.Delete(string(sessionID))
+	err := apps.Connector.Disconnect(user.ConferenceID, user.Channel)
+	if err != nil {
+		logrus.Error("Fail to disconnect: ", err)
+	}
+	apps.User.Delete(user.SessionID)
 	ctx.Response.Header.DelCookie(sessionCookie)
+}
+
+func record(ctx *fasthttp.RequestCtx, apps *application.Applications) {
+	user := getUser(ctx, apps)
+
+	err := apps.Conference.StartRecord(user, user.ConferenceID)
+	if err != nil {
+		ctx.SetStatusCode(403)
+		logrus.Error("fail to start record: ", err)
+		return
+	}
 }

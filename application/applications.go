@@ -38,9 +38,9 @@ func New(reps *repository.Repositories) *Applications {
 	connector := app.NewConnector(ariClient, reps.Bridge)
 
 	return &Applications{
-		Listener:        app.NewListener(ariClient, app.NewHandler(ariClient, reps, connector)),
+		Listener:        app.NewListener(reps, ariClient, app.NewHandler(ariClient, reps, connector)),
 		Snoopy:          snoopy.New(),
-		Conference:      app.NewConference(reps),
+		Conference:      app.NewConference(reps, ariClient),
 		AsteriskAccount: app.NewAsteriskAccount(reps),
 		User:            app.NewUser(reps),
 		Connector:       connector,
