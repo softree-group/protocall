@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/sirupsen/logrus"
-	"github.com/valyala/fasthttp"
 	"protocall/application"
 	"protocall/domain/entity"
+
+	"github.com/sirupsen/logrus"
+	"github.com/valyala/fasthttp"
 )
 
 func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
@@ -47,7 +48,6 @@ func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 }
 
 func join(ctx *fasthttp.RequestCtx, apps *application.Applications) {
-
 	meetID := ctx.UserValue("meetID").(string)
 	if !apps.Conference.IsExist(meetID) {
 		ctx.Error("Conference does not exist", 404)

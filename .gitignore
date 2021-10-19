@@ -1,2 +1,7 @@
 config.yaml
 .idea
+.env
+.DS_Store
+vendor/
+test_dir/
+uploader.yaml

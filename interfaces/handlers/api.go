@@ -2,13 +2,14 @@ package handlers
 
 import (
 	"fmt"
+	"protocall/application"
+	"protocall/config"
+
 	"github.com/fasthttp/router"
 	"github.com/mark-by/logutils"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/valyala/fasthttp"
-	"protocall/application"
-	"protocall/config"
 )
 
 func ServeAPI(apps *application.Applications) {
