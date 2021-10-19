@@ -2,13 +2,14 @@ package handlers
 
 import (
 	"fmt"
+	"protocall/application"
+	"protocall/config"
+
 	"github.com/fasthttp/router"
 	"github.com/mark-by/logutils"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/valyala/fasthttp"
-	"protocall/application"
-	"protocall/config"
 )
 
 func ServeAPI(apps *application.Applications) {
@@ -27,7 +28,9 @@ func ServeAPI(apps *application.Applications) {
 	compose(r.GET, "/session", session)
 	compose(r.POST, "/conference/start", start)
 	compose(r.POST, "/conference/{meetID}/join", join)
+	compose(r.POST, "/conference/record", record)
 	compose(r.POST, "/conference/leave", leave)
+	compose(r.POST, "/conference/ready", ready)
 
 	startServer(r)
 }

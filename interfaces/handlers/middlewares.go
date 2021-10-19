@@ -55,7 +55,7 @@ func prefixMiddleware(prefix string) func(handler fasthttp.RequestHandler) fasth
 func debugMiddleWare(next fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		logrus.Debugf("%s %s %s", ctx.Method(), ctx.RequestURI(), ctx.PostBody())
-		logrus.Debugf("%s", ctx.Request.Header.RawHeaders())
+		//logrus.Debugf("%s", ctx.Request.Header.RawHeaders())
 
 		next(ctx)
 	}

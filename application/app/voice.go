@@ -17,14 +17,10 @@ func NewVoice(s repository.VoiceStorage, r repository.VoiceRecognizer) repositor
 	}
 }
 
-func (v *Voice) Recognize(ctx context.Context, filename string) (*entity.Message, error) {
-	audio, err := v.storage.GetRecord(ctx, filename)
-	if err != nil {
-		return nil, err
-	}
-	msg, err := v.tts.Recognize(ctx, audio)
-	if err != nil {
-		return nil, err
-	}
-	return msg, nil
+func (v *Voice) Translate(context.Context, string) (*entity.Message, error) {
+	return nil, nil
+}
+
+func (v *Voice) SendToUser(context.Context) {
+	return
 }

@@ -2,11 +2,20 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/valyala/fasthttp"
 	"protocall/application"
+	"protocall/domain/entity"
+
+	"github.com/sirupsen/logrus"
+	"github.com/valyala/fasthttp"
 )
 
 func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
+	user := getUser(ctx, apps)
+	if user != nil {
+		ctx.Error("You are already signed in", 400)
+		return
+	}
+
 	user, account := createSession(ctx, apps)
 	if user == nil {
 		return
@@ -35,17 +44,10 @@ func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	}
 
 	ctx.Response.SetBody(data)
-<<<<<<< HEAD
-<<<<<<< HEAD
 	ctx.Response.Header.SetContentType("application/json")
-=======
->>>>>>> 977da2b (rebase inbloud)
-=======
->>>>>>> 9dff4d40660aa86a5ea66aa72ef8bfb947260101
 }
 
 func join(ctx *fasthttp.RequestCtx, apps *application.Applications) {
-
 	meetID := ctx.UserValue("meetID").(string)
 	if !apps.Conference.IsExist(meetID) {
 		ctx.Error("Conference does not exist", 404)
@@ -73,8 +75,6 @@ func join(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	}
 
 	ctx.Response.SetBody(data)
-<<<<<<< HEAD
-<<<<<<< HEAD
 	ctx.Response.Header.SetContentType("application/json")
 }
 
@@ -121,24 +121,10 @@ func ready(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	user := getUser(ctx, apps)
 	if user == nil {
-=======
-=======
->>>>>>> 9dff4d40660aa86a5ea66aa72ef8bfb947260101
-}
-
-func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
-	sessionID := ctx.Request.Header.Cookie(sessionCookie)
-	if len(sessionID) == 0 {
-<<<<<<< HEAD
->>>>>>> 977da2b (rebase inbloud)
-=======
->>>>>>> 9dff4d40660aa86a5ea66aa72ef8bfb947260101
 		ctx.SetStatusCode(400)
 		return
 	}
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 	err := apps.Connector.Disconnect(user.ConferenceID, user.Channel)
 	if err != nil {
 		logrus.Error("Fail to disconnect: ", err)
@@ -157,13 +143,3 @@ func record(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		return
 	}
 }
-=======
-	apps.User.Delete(string(sessionID))
-	ctx.Response.Header.DelCookie(sessionCookie)
-}
->>>>>>> 977da2b (rebase inbloud)
-=======
-	apps.User.Delete(string(sessionID))
-	ctx.Response.Header.DelCookie(sessionCookie)
-}
->>>>>>> 9dff4d40660aa86a5ea66aa72ef8bfb947260101

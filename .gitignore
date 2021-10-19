@@ -3,4 +3,5 @@ config.yaml
 .env
 .DS_Store
 vendor/
-test_dir
+test_dir/
+uploader.yaml
