@@ -2,19 +2,25 @@ package repository
 
 import (
 	"context"
+	"io"
+
 	"protocall/domain/entity"
-	"protocall/infrastructure/storage"
 )
 
 type Voice interface {
-	Recognize(context.Context, string) (*entity.Message, error)
+	Translate(context.Context, string) (*entity.Message, error)
+	SendToUser(context.Context)
 }
 
 type VoiceStorage interface {
-	UploadFile(bucketName string, remotePath string, localPath string) (string, error)
-	DownloadFile(bucketName string, remotePath string, versionID string, localPath string) error
+	UploadFile(context.Context, string, string, string) error
+	GetFile(context.Context, string, string) (io.ReadCloser, error)
 }
 
 type VoiceRecognizer interface {
 	Recognize(context.Context, []byte) (*entity.Message, error)
+}
+
+type VoiceSender interface {
+	SendSMTP()
 }

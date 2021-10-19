@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 
 	"github.com/gorilla/websocket"
 	"github.com/kirito41dd/xslice"
@@ -17,11 +18,11 @@ type Config struct {
 	Port string
 }
 
-type SpechToText struct {
+type recognizer struct {
 	config *Config
 }
 
-func NewSpechToText(c *Config) repository.VoiceRecognizer {
+func NewRecognizer(c *Config) repository.VoiceRecognizer {
 	return &SpechToText{
 		config: c,
 	}
@@ -29,7 +30,7 @@ func NewSpechToText(c *Config) repository.VoiceRecognizer {
 
 const chunkSize = 8000
 
-func (stt *SpechToText) Recognize(ctx context.Context, audio []byte) (*entity.Message, error) {
+func (stt *SpechToText) Recognize(ctx context.Context, audio io.ReadCloser) (*entity.Message, error) {
 	conn, _, err := websocket.DefaultDialer.Dial(fmt.Sprintf("ws://%v:%v"), nil)
 	if err != nil {
 		return nil, err
