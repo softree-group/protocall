@@ -1,20 +1,8 @@
 package entity
 
-<<<<<<< HEAD
 import (
-	"github.com/CyCoreSystems/ari/v5"
 	"github.com/google/btree"
 )
-
-type User struct {
-	Username        string   `json:"name"`
-	Email           string   `json:"-"`
-	SessionID       string   `json:"-"`
-	AsteriskAccount string   `json:"id"`
-	Channel         *ari.Key `json:"-"`
-	ConferenceID    string   `json:"conference_id"`
-=======
-import "github.com/google/btree"
 
 type User struct {
 	Username        string `json:"name"`
@@ -23,7 +11,6 @@ type User struct {
 	AsteriskAccount string `json:"id"`
 	Channel         string `json:"-"`
 	ConferenceID    string `json:"conference_id"`
->>>>>>> 977da2b (rebase inbloud)
 }
 
 func (u User) Less(then btree.Item) bool {

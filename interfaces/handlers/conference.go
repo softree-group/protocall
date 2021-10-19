@@ -36,9 +36,12 @@ func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 
 	ctx.Response.SetBody(data)
 <<<<<<< HEAD
+<<<<<<< HEAD
 	ctx.Response.Header.SetContentType("application/json")
 =======
 >>>>>>> 977da2b (rebase inbloud)
+=======
+>>>>>>> 9dff4d40660aa86a5ea66aa72ef8bfb947260101
 }
 
 func join(ctx *fasthttp.RequestCtx, apps *application.Applications) {
@@ -70,6 +73,7 @@ func join(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	}
 
 	ctx.Response.SetBody(data)
+<<<<<<< HEAD
 <<<<<<< HEAD
 	ctx.Response.Header.SetContentType("application/json")
 }
@@ -118,16 +122,22 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	user := getUser(ctx, apps)
 	if user == nil {
 =======
+=======
+>>>>>>> 9dff4d40660aa86a5ea66aa72ef8bfb947260101
 }
 
 func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	sessionID := ctx.Request.Header.Cookie(sessionCookie)
 	if len(sessionID) == 0 {
+<<<<<<< HEAD
 >>>>>>> 977da2b (rebase inbloud)
+=======
+>>>>>>> 9dff4d40660aa86a5ea66aa72ef8bfb947260101
 		ctx.SetStatusCode(400)
 		return
 	}
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 	err := apps.Connector.Disconnect(user.ConferenceID, user.Channel)
 	if err != nil {
@@ -152,3 +162,8 @@ func record(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	ctx.Response.Header.DelCookie(sessionCookie)
 }
 >>>>>>> 977da2b (rebase inbloud)
+=======
+	apps.User.Delete(string(sessionID))
+	ctx.Response.Header.DelCookie(sessionCookie)
+}
+>>>>>>> 9dff4d40660aa86a5ea66aa72ef8bfb947260101

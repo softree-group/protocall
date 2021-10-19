@@ -61,4 +61,24 @@ func New(reps *repository.Repositories) *Applications {
 		User:            app.NewUser(reps),
 		Connector:       app.NewConnector(ariClient, reps.Bridge),
 	}
+
+	r, err := recognizer.New
+	connector := app.NewConnector(ariClient, reps.Bridge)
+
+	storage, err := storage.NewStorage(&storage.Config{
+
+	})
+	if err != nil {
+		logrus.Fatal("cannot connect to s3: ", err)
+	}
+
+	r, err := recognizer.New
+
+	return &Applications{
+		Listener:        app.NewListener(ariClient, app.NewHandler(ariClient, reps, connector)),
+		Snoopy:          snoopy.New(),
+		Conference:      app.NewConference(reps),
+		AsteriskAccount: app.NewAsteriskAccount(reps),
+		User:            app.NewUser(reps),
+		Connector:       connector,
 }
