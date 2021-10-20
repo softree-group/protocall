@@ -15,4 +15,14 @@ const (
 	ServerIP     = "server.ip"
 	ServerAPIKey = "server.api_key"
 	ServerDomain = "server.domain"
+
+	S3Bucket     = "s3.bucket"
+	S3Endpoint   = "s3.endpoint"
+	S3DisableSSL = "s3.disableSSL"
+
+	UploaderHostConf = "uploader.host"
+	UploaderPortConf = "uploader.port"
+
+	TranslatorHostConf = "translator.host"
+	TranslatorPortConf = "translator.port"
 )
