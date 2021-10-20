@@ -38,7 +38,11 @@ func New(reps *repository.Repositories) *Applications {
 		logrus.Fatal("cannot connect to asterisk: ", err)
 	}
 
-	storage, err := storage.NewStorage(&storage.StorageConfig{})
+	storage, err := storage.NewStorage(&storage.StorageConfig{
+		Bucket:     viper.GetString(config.S3Bucket),
+		Endpoint:   viper.GetString(config.S3Endpoint),
+		DisableSSL: viper.GetBool(config.S3DisableSSL),
+	})
 	if err != nil {
 		logrus.Fatal("cannot connect to s3: ", err)
 	}
