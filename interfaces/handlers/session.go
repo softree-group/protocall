@@ -53,6 +53,20 @@ func session(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 			return
 		}
 	}
+
+	conference := apps.Conference.Get(user.ConferenceID)
+	if conference == nil {
+		ctx.Response.Header.DelCookie(sessionCookie)
+		ctx.SetStatusCode(204)
+		return
+	}
+
+	data, _ := json.Marshal(map[string]interface{}{
+		"conference": conference,
+		"account":    account,
+	})
+
+	ctx.Response.SetBody(data)
 }
 
 func createSession(ctx *fasthttp.RequestCtx, apps *application.Applications) (*entity.User, *entity.AsteriskAccount) {
