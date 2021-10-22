@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/CyCoreSystems/ari/v5"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"protocall/application/applications"
 	"protocall/config"
@@ -102,7 +103,16 @@ func (c Connector) Disconnect(bridgeID string, channel *ari.Key) error {
 	if bridge == nil {
 		return errors.New("no bridge")
 	}
-	return bridge.RemoveChannel(channel.ID)
+	err := bridge.RemoveChannel(channel.ID)
+	if err != nil {
+		logrus.Error("fail to remove from channel: ", err)
+	}
+
+	err = c.ari.Channel().Get(channel).Hangup()
+	if err != nil {
+		logrus.Error("fail to delete channel: ", err)
+	}
+	return err
 }
 
 var _ applications.Connector = &Connector{}

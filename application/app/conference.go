@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/CyCoreSystems/ari/v5"
+	"github.com/google/btree"
 	"github.com/hashicorp/go-uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -20,18 +21,22 @@ type Conference struct {
 	ari  ari.Client
 }
 
+func (c Conference) RemoveParticipant(user *entity.User, meetID string) {
+	conference := c.reps.Conference.Get(meetID)
+	if conference == nil {
+		return
+	}
+
+}
+
 func NewConference(reps *repository.Repositories, ari ari.Client) *Conference {
 	return &Conference{reps: reps, ari: ari}
 }
 
 func (c Conference) StartConference(user *entity.User) (*entity.Conference, error) {
 	id, _ := uuid.GenerateUUID()
-	conference := &entity.Conference{
-		ID:           id,
-		Participants: []*entity.User{user},
-		HostUserID:   user.AsteriskAccount,
-		BridgeID:     "",
-	}
+	conference := entity.NewConference(id, user.AsteriskAccount)
+	conference.Participants.ReplaceOrInsert(user)
 	user.ConferenceID = id
 	c.reps.User.Save(user)
 	c.reps.Conference.Save(conference)
@@ -43,7 +48,7 @@ func (c Conference) JoinToConference(user *entity.User, meetID string) (*entity.
 	if conference == nil {
 		return nil, errors.New("no such meeting")
 	}
-	conference.Participants = append(conference.Participants, user)
+	conference.Participants.ReplaceOrInsert(user)
 	user.ConferenceID = meetID
 	c.reps.User.Save(user)
 	c.reps.Conference.Save(conference)
@@ -106,20 +111,38 @@ func (c Conference) StartRecord(user *entity.User, meetID string) error {
 	conference.IsRecording = true
 	c.reps.Conference.Save(conference)
 
-	for _, user := range conference.Participants {
-
+	conference.Participants.Ascend(func(item btree.Item) bool {
+		if item == nil {
+			return false
+		}
+		user := item.(*entity.User)
+		if user == nil {
+			return false
+		}
 		err := c.StartRecordUser(user, conference.ID)
-
 		if err != nil {
 			logrus.WithField("user", fmt.Sprintf("%+v", user)).Error("Fail to snoop: ", err)
 		}
-	}
+		return true
+	})
 
 	return nil
 }
 
 func (c Conference) Get(meetID string) *entity.Conference {
 	return c.reps.Conference.Get(meetID)
+}
+
+func (c Conference) Delete(meetID string) {
+	c.reps.Conference.Delete(meetID)
+	err := c.ari.Bridge().Delete(&ari.Key{
+		Kind: ari.BridgeKey,
+		ID:   meetID,
+		App:  viper.GetString(config.ARIApplication),
+	})
+	if err != nil {
+		logrus.Error("fail to delete bridge: ", err)
+	}
 }
 
 var _ applications.Conference = Conference{}

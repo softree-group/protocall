@@ -3,9 +3,7 @@ package app
 import (
 	"github.com/CyCoreSystems/ari/v5"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"protocall/application/applications"
-	"protocall/config"
 	"protocall/domain/repository"
 )
 
@@ -36,24 +34,6 @@ func (e EventListener) Listen() {
 			value := event.(*ari.ChannelLeftBridge)
 			logrus.Info("Bridge ID: ", value.Bridge.ID)
 			logrus.Info("LEFT: ", value.Bridge.ChannelIDs)
-			if len(value.Bridge.ChannelIDs) == 0 {
-				err := e.ari.Bridge().Delete(&ari.Key{
-					Kind: ari.BridgeKey,
-					ID:   value.Bridge.ID,
-					App:  viper.GetString(config.ARIApplication),
-				})
-				if err != nil {
-					logrus.Error("fail to delete bridge: ", err)
-				}
-
-				conference := e.reps.Conference.Get(value.Bridge.ID)
-				for _, user := range conference.Participants {
-					e.reps.AsteriskAccount.Free(user.AsteriskAccount)
-					e.reps.User.Delete(user.SessionID)
-				}
-
-				e.reps.Conference.Delete(value.Bridge.ID)
-			}
 		}
 	}
 
