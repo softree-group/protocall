@@ -1,3 +1,6 @@
+connector
+deploy.sh
+accounts.json
 config.yaml
 .idea
 .env

@@ -3,8 +3,9 @@ package repository
 import "protocall/domain/entity"
 
 type AsteriskAccountRepository interface {
-	Get(account string) *entity.AsteriskAccount
+	GetAccount(account string) *entity.AsteriskAccount
 	GetFree() *entity.AsteriskAccount
-	Take(account string, userID string)
-	Free(account string)
+	TakeAccount(account string, userID string)
+	FreeAccount(account string)
+	SaveAccount(account entity.AsteriskAccount)
 }

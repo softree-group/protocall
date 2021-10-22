@@ -1,9 +1,10 @@
 package memory
 
 import (
-	"github.com/google/btree"
 	"protocall/domain/entity"
 	"protocall/domain/repository"
+
+	"github.com/google/btree"
 )
 
 type UserMemory struct {
@@ -16,7 +17,7 @@ func NewUser() *UserMemory {
 	}
 }
 
-func (u UserMemory) Find(sessionID string) *entity.User {
+func (u UserMemory) FindUser(sessionID string) *entity.User {
 	item := u.store.Get(&entity.User{SessionID: sessionID})
 	if item == nil {
 		return nil
@@ -24,11 +25,11 @@ func (u UserMemory) Find(sessionID string) *entity.User {
 	return item.(*entity.User)
 }
 
-func (u UserMemory) Save(user *entity.User) {
+func (u UserMemory) SaveUser(user *entity.User) {
 	u.store.ReplaceOrInsert(user)
 }
 
-func (u UserMemory) Delete(sessionID string) {
+func (u UserMemory) DeleteUser(sessionID string) {
 	u.store.Delete(&entity.User{SessionID: sessionID})
 }
 

@@ -2,12 +2,9 @@ package application
 
 import (
 	"protocall/application/app"
-	"protocall/application/app/snoopy"
 	"protocall/application/applications"
-	"protocall/config"
 	"protocall/domain/repository"
-	"protocall/infrastructure/recognizer"
-	"protocall/infrastructure/storage"
+	"protocall/internal/config"
 
 	"github.com/CyCoreSystems/ari/v5/client/native"
 	"github.com/sirupsen/logrus"
@@ -21,10 +18,10 @@ type Applications struct {
 	AsteriskAccount applications.AsteriskAccount
 	Conference      applications.Conference
 	Connector       applications.Connector
-	Voice           repository.Voice
+	Record          applications.Record
 }
 
-func New(reps *repository.Repositories) *Applications {
+func New(reps repository.Repositories) *Applications {
 	logrus.Info("start connect")
 	ariClient, err := native.Connect(&native.Options{
 		Application:  viper.GetString(config.ARIApplication),
@@ -38,24 +35,15 @@ func New(reps *repository.Repositories) *Applications {
 		logrus.Fatal("cannot connect to asterisk: ", err)
 	}
 
-	storage, err := storage.NewStorage(&storage.StorageConfig{
-		Bucket:     viper.GetString(config.S3Bucket),
-		Endpoint:   viper.GetString(config.S3Endpoint),
-		DisableSSL: viper.GetBool(config.S3DisableSSL),
-	})
-	if err != nil {
-		logrus.Fatal("cannot connect to s3: ", err)
-	}
-
-	connector := app.NewConnector(ariClient, reps.Bridge)
+	connector := app.NewConnector(ariClient, reps)
 
 	return &Applications{
 		Listener:        app.NewListener(reps, ariClient, app.NewHandler(ariClient, reps, connector)),
-		Snoopy:          snoopy.New(),
+		Snoopy:          app.NewSnoopy(),
 		Conference:      app.NewConference(reps, ariClient),
-		AsteriskAccount: app.NewAsteriskAccount(reps),
+		AsteriskAccount: app.NewAsteriskAccount(reps, viper.GetString(config.ARIAccountsFile)),
 		User:            app.NewUser(reps),
 		Connector:       connector,
-		Voice:           app.NewVoice(storage, recognizer.NewRecognizer(&recognizer.RecognizerConfig{})),
+		Record:          app.NewRecord(reps),
 	}
 }

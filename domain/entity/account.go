@@ -8,6 +8,8 @@ type AsteriskAccount struct {
 	UserID   string `json:"-"`
 }
 
+type AsteriskAccounts []AsteriskAccount
+
 func (a AsteriskAccount) Less(then btree.Item) bool {
 	return a.Username < then.(*AsteriskAccount).Username
 }

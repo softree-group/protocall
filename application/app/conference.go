@@ -3,57 +3,61 @@ package app
 import (
 	"errors"
 	"fmt"
-	"protocall/application/applications"
-	"protocall/config"
-	"protocall/domain/entity"
-	"protocall/domain/repository"
 	"time"
 
 	"github.com/CyCoreSystems/ari/v5"
+	"github.com/google/btree"
 	"github.com/hashicorp/go-uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/valyala/fasthttp"
+
+	"protocall/application/applications"
+	"protocall/domain/entity"
+	"protocall/domain/repository"
+	"protocall/internal/config"
 )
 
 type Conference struct {
-	reps *repository.Repositories
+	reps repository.Repositories
 	ari  ari.Client
 }
 
-func NewConference(reps *repository.Repositories, ari ari.Client) *Conference {
+func NewConference(reps repository.Repositories, ari ari.Client) *Conference {
 	return &Conference{reps: reps, ari: ari}
 }
 
-func (c Conference) StartConference(user *entity.User) (*entity.Conference, error) {
-	id, _ := uuid.GenerateUUID()
-	conference := &entity.Conference{
-		ID:           id,
-		Participants: []*entity.User{user},
-		HostUserID:   user.AsteriskAccount,
-		BridgeID:     "",
-		Start:        time.Now(),
+func (c *Conference) RemoveParticipant(user *entity.User, meetID string) {
+	conference := c.reps.GetConference(meetID)
+	if conference == nil {
+		return
 	}
+}
+
+func (c *Conference) StartConference(user *entity.User) (*entity.Conference, error) {
+	id, _ := uuid.GenerateUUID()
+	conference := entity.NewConference(id, user.AsteriskAccount)
+	conference.Participants.ReplaceOrInsert(user)
 	user.ConferenceID = id
-	c.reps.User.Save(user)
-	c.reps.Conference.Save(conference)
+	c.reps.SaveUser(user)
+	c.reps.SaveConference(conference)
 	return conference, nil
 }
 
-func (c Conference) JoinToConference(user *entity.User, meetID string) (*entity.Conference, error) {
-	conference := c.reps.Conference.Get(meetID)
+func (c *Conference) JoinToConference(user *entity.User, meetID string) (*entity.Conference, error) {
+	conference := c.reps.GetConference(meetID)
 	if conference == nil {
 		return nil, errors.New("no such meeting")
 	}
-	conference.Participants = append(conference.Participants, user)
+	conference.Participants.ReplaceOrInsert(user)
 	user.ConferenceID = meetID
-	c.reps.User.Save(user)
-	c.reps.Conference.Save(conference)
+	c.reps.SaveUser(user)
+	c.reps.SaveConference(conference)
 	return conference, nil
 }
 
-func (c Conference) IsExist(meetID string) bool {
-	return c.reps.Conference.Get(meetID) != nil
+func (c *Conference) IsExist(meetID string) bool {
+	return c.reps.GetConference(meetID) != nil
 }
 
 func postSnoop(id, snoopId, appArgs, app, spy, whisper string) (*fasthttp.Response, error) {
@@ -82,21 +86,14 @@ func postSnoop(id, snoopId, appArgs, app, spy, whisper string) (*fasthttp.Respon
 	return resp, err
 }
 
-func (c Conference) StartRecordUser(user *entity.User, conferenceID string) error {
+func (c *Conference) StartRecordUser(user *entity.User, conferenceID string) error {
 	resp, err := postSnoop(user.Channel.ID, fmt.Sprintf("%s_%v_%s", conferenceID, time.Now().UTC().Unix(), user.Username), user.SessionID, viper.GetString(config.ARISnoopyApplication), "in", "both")
 	fasthttp.ReleaseResponse(resp)
-	//logrus.Info("Channel: ", user.Channel)
-	//_, err := c.ari.Channel().Snoop(user.Channel, fmt.Sprintf("%s/%v_%s", conferenceID, time.Now().UTC().Unix(), "some"), &ari.SnoopOptions{
-	//	App:     viper.GetString(config.ARISnoopyApplication),
-	//	AppArgs: user.Channel.ID,
-	//	Spy:     "in",
-	//	Whisper: "both",
-	//})
 	return err
 }
 
-func (c Conference) StartRecord(user *entity.User, meetID string) error {
-	conference := c.reps.Conference.Get(meetID)
+func (c *Conference) StartRecord(user *entity.User, meetID string) error {
+	conference := c.reps.GetConference(meetID)
 	if conference == nil {
 		return errors.New("does not exist")
 	}
@@ -106,22 +103,40 @@ func (c Conference) StartRecord(user *entity.User, meetID string) error {
 	}
 
 	conference.IsRecording = true
-	c.reps.Conference.Save(conference)
+	c.reps.SaveConference(conference)
 
-	for _, user := range conference.Participants {
-
+	conference.Participants.Ascend(func(item btree.Item) bool {
+		if item == nil {
+			return false
+		}
+		user := item.(*entity.User)
+		if user == nil {
+			return false
+		}
 		err := c.StartRecordUser(user, conference.ID)
-
 		if err != nil {
 			logrus.WithField("user", fmt.Sprintf("%+v", user)).Error("Fail to snoop: ", err)
 		}
-	}
+		return true
+	})
 
 	return nil
 }
 
-func (c Conference) Get(meetID string) *entity.Conference {
-	return c.reps.Conference.Get(meetID)
+func (c *Conference) Get(meetID string) *entity.Conference {
+	return c.reps.GetConference(meetID)
 }
 
-var _ applications.Conference = Conference{}
+func (c *Conference) Delete(meetID string) {
+	c.reps.DeleteConference(meetID)
+	err := c.ari.Bridge().Delete(&ari.Key{
+		Kind: ari.BridgeKey,
+		ID:   meetID,
+		App:  viper.GetString(config.ARIApplication),
+	})
+	if err != nil {
+		logrus.Error("fail to delete bridge: ", err)
+	}
+}
+
+var _ applications.Conference = &Conference{}

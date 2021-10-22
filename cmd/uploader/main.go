@@ -13,8 +13,7 @@ import (
 	"github.com/valyala/fasthttp"
 	"gopkg.in/yaml.v2"
 
-	"protocall/domain/repository"
-	"protocall/infrastructure/storage"
+	"protocall/pkg/s3"
 )
 
 type ServerConfig struct {
@@ -24,14 +23,14 @@ type ServerConfig struct {
 }
 
 type Server struct {
-	storage repository.VoiceStorage
+	storage *s3.S3
 	bucket  string
 	root    string
 }
 
-func NewServer(s3 repository.VoiceStorage, root, bucket string) *Server {
+func NewServer(s *s3.S3, root, bucket string) *Server {
 	return &Server{
-		storage: s3,
+		storage: s,
 		root:    root,
 		bucket:  bucket,
 	}
@@ -85,11 +84,11 @@ func main() {
 	}
 
 	config := &struct {
-		SrvConf ServerConfig          `yaml:"uploader"`
-		S3Conf  storage.StorageConfig `yaml:"s3"`
+		SrvConf ServerConfig     `yaml:"uploader"`
+		S3Conf  s3.StorageConfig `yaml:"s3"`
 	}{
 		SrvConf: ServerConfig{},
-		S3Conf:  storage.StorageConfig{},
+		S3Conf:  s3.StorageConfig{},
 	}
 	if err := yaml.Unmarshal(data, config); err != nil {
 		fmt.Println(err)
@@ -98,7 +97,7 @@ func main() {
 	config.S3Conf.AccessKey = os.Getenv("ACCESS_KEY")
 	config.S3Conf.SecretKey = os.Getenv("SECRET_KEY")
 
-	s3, err := storage.NewStorage(&config.S3Conf)
+	s3, err := s3.NewStorage(&config.S3Conf)
 	if err != nil {
 		fmt.Println("cannot connect to s3", err)
 		os.Exit(1)

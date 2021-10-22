@@ -1,35 +1,63 @@
 package app
 
 import (
+	"encoding/json"
+	"io/ioutil"
+	"os"
 	"protocall/application/applications"
 	"protocall/domain/entity"
 	"protocall/domain/repository"
+
+	"github.com/sirupsen/logrus"
 )
 
 type AsteriskAccount struct {
-	reps *repository.Repositories
+	reps repository.AsteriskAccountRepository
 }
 
-func NewAsteriskAccount(reps *repository.Repositories) *AsteriskAccount {
-	return &AsteriskAccount{
-		reps: reps,
+func (a *AsteriskAccount) parse(accountsFile string) {
+	jsonFile, err := os.Open(accountsFile)
+	if err != nil {
+		logrus.Fatal("fail to open file ", accountsFile, ": ", err)
+	}
+	defer jsonFile.Close()
+
+	bytes, _ := ioutil.ReadAll(jsonFile)
+
+	var accounts entity.AsteriskAccounts
+
+	err = json.Unmarshal(bytes, &accounts)
+	if err != nil {
+		logrus.Fatal("fail to parse file ", accountsFile, ": ", err)
+	}
+
+	for _, account := range accounts {
+		a.reps.SaveAccount(account)
 	}
 }
 
-func (a AsteriskAccount) GetFree() *entity.AsteriskAccount {
-	return a.reps.AsteriskAccount.GetFree()
+func NewAsteriskAccount(reps repository.AsteriskAccountRepository, accountsFile string) *AsteriskAccount {
+	r := &AsteriskAccount{
+		reps: reps,
+	}
+	r.parse(accountsFile)
+	return r
 }
 
-func (a AsteriskAccount) Get(account string) *entity.AsteriskAccount {
-	return a.reps.AsteriskAccount.Get(account)
+func (a *AsteriskAccount) GetFree() *entity.AsteriskAccount {
+	return a.reps.GetFree()
 }
 
-func (a AsteriskAccount) Take(account string, userID string) {
-	a.reps.AsteriskAccount.Take(account, userID)
+func (a *AsteriskAccount) Get(account string) *entity.AsteriskAccount {
+	return a.reps.GetAccount(account)
 }
 
-func (a AsteriskAccount) Free(account string) {
-	a.reps.AsteriskAccount.Free(account)
+func (a *AsteriskAccount) Take(account string, userID string) {
+	a.reps.TakeAccount(account, userID)
 }
 
-var _ applications.AsteriskAccount = AsteriskAccount{}
+func (a *AsteriskAccount) Free(account string) {
+	a.reps.FreeAccount(account)
+}
+
+var _ applications.AsteriskAccount = &AsteriskAccount{}

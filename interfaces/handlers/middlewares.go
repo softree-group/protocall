@@ -1,12 +1,13 @@
 package handlers
 
 import (
+	"protocall/internal/config"
+	"strings"
+
 	"github.com/lab259/cors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/valyala/fasthttp"
-	"protocall/config"
-	"strings"
 )
 
 func corsMiddleware() *cors.Cors {
@@ -55,7 +56,6 @@ func prefixMiddleware(prefix string) func(handler fasthttp.RequestHandler) fasth
 func debugMiddleWare(next fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		logrus.Debugf("%s %s %s", ctx.Method(), ctx.RequestURI(), ctx.PostBody())
-		//logrus.Debugf("%s", ctx.Request.Header.RawHeaders())
 
 		next(ctx)
 	}

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/google/btree"
 	"protocall/application"
 	"protocall/domain/entity"
 
@@ -129,8 +130,36 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	if err != nil {
 		logrus.Error("Fail to disconnect: ", err)
 	}
-	apps.User.Delete(user.SessionID)
-	ctx.Response.Header.DelCookie(sessionCookie)
+
+	apps.AsteriskAccount.Free(user.AsteriskAccount)
+
+	defer apps.User.Delete(user.SessionID)
+	defer ctx.Response.Header.DelCookie(sessionCookie)
+
+	conference := apps.Conference.Get(user.ConferenceID)
+	conference.Participants.Delete(user)
+
+	if conference.HostUserID == user.AsteriskAccount {
+		conference.Participants.Ascend(func(item btree.Item) bool {
+			if item == nil {
+				return false
+			}
+			participant := item.(*entity.User)
+			if participant == nil {
+				return false
+			}
+			apps.Connector.Disconnect(participant.ConferenceID, participant.Channel)
+			apps.AsteriskAccount.Free(user.AsteriskAccount)
+			apps.User.Delete(user.SessionID)
+			// TODO: send socket event about end conference
+			return true
+		})
+
+		apps.Conference.Delete(user.ConferenceID)
+		return
+	}
+
+	// TODO: send socket event about leave participant
 }
 
 func record(ctx *fasthttp.RequestCtx, apps *application.Applications) {

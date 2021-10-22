@@ -11,4 +11,6 @@ type Conference interface {
 	StartRecord(user *entity.User, meetID string) error
 	Get(meetID string) *entity.Conference
 	StartRecordUser(user *entity.User, meetID string) error
+	Delete(meetID string)
+	RemoveParticipant(user *entity.User, meetID string)
 }
