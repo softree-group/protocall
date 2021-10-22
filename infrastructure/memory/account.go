@@ -18,22 +18,6 @@ func NewAsteriskAccount() *AsteriskAccountMemory {
 		lock:  &sync.RWMutex{},
 		store: btree.New(32),
 	}
-
-	repo.store.ReplaceOrInsert(&entity.AsteriskAccount{
-		Username: "1233",
-		Password: "technopark5535",
-		UserID:   "",
-	})
-	repo.store.ReplaceOrInsert(&entity.AsteriskAccount{
-		Username: "1234",
-		Password: "technopark5535",
-		UserID:   "",
-	})
-	repo.store.ReplaceOrInsert(&entity.AsteriskAccount{
-		Username: "1235",
-		Password: "technopark5535",
-		UserID:   "",
-	})
 	return repo
 }
 
@@ -81,6 +65,10 @@ func (a AsteriskAccountMemory) Get(account string) *entity.AsteriskAccount {
 	}
 
 	return item.(*entity.AsteriskAccount)
+}
+
+func (a AsteriskAccountMemory) Save(account entity.AsteriskAccount) {
+	a.store.ReplaceOrInsert(&account)
 }
 
 var _ repository.AsteriskAccountRepository = AsteriskAccountMemory{}

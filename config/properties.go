@@ -7,6 +7,7 @@ const (
 	ARIWebsocketUrl      = "ari.ws_url"
 	ARIUser              = "ari.user"
 	ARIPassword          = "ari.password"
+	ARIAccountsFile      = "ari.account_file"
 
 	LogFile  = "log.file"
 	LogLevel = "log.level"

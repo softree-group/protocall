@@ -15,6 +15,7 @@ func ariDefaults() {
 	viper.SetDefault(ARIPassword, "")
 	viper.SetDefault(ARIUrl, "")
 	viper.SetDefault(ARIWebsocketUrl, "")
+	viper.SetDefault(ARIAccountsFile, "")
 }
 
 func logDefaults() {

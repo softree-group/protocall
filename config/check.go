@@ -70,6 +70,7 @@ func checkConfig() {
 	equal(ARIWebsocketUrl, "", fatal, "Не указан адрес сокета астериска")
 	equal(ARIUser, "", fatal, "Не указан пользователь астериска")
 	equal(ARIPassword, "", fatal, "Не указан пароль пользователя астериска")
+	equal(ARIAccountsFile, "", fatal, "Не указан файл с аккаунтами астериска")
 
 	equal(ServerAPIKey, "", fatal, "Не указан api_key")
 

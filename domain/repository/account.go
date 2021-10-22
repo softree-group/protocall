@@ -7,4 +7,5 @@ type AsteriskAccountRepository interface {
 	GetFree() *entity.AsteriskAccount
 	Take(account string, userID string)
 	Free(account string)
+	Save(account entity.AsteriskAccount)
 }
