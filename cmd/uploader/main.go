@@ -44,6 +44,8 @@ func (s *Server) upload(ctx *fasthttp.RequestCtx) {
 		ctx.Response.SetStatusCode(http.StatusBadRequest)
 		return
 	}
+	localFile := filepath.Join(s.root, from)
+
 	to := string(ctx.QueryArgs().Peek("to"))
 	if to == "" {
 		fmt.Println("empty query parameter: to")
@@ -51,17 +53,19 @@ func (s *Server) upload(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	if err := s.storage.UploadFile(
-		context.Background(),
-		s.bucket,
-		filepath.Join(s.root, from),
-		filepath.Join(to),
-	); err != nil {
+	if err := s.storage.UploadFile(context.Background(), s.bucket, localFile, filepath.Join(to)); err != nil {
 		ctx.Response.SetStatusCode(http.StatusInternalServerError)
 		fmt.Println(err)
 		return
 	}
-	ctx.Response.SetStatusCode(http.StatusOK)
+
+	if err := os.Remove(localFile); err != nil {
+		ctx.Response.SetStatusCode(http.StatusInternalServerError)
+		fmt.Println(err)
+		return
+	}
+
+	ctx.Response.SetStatusCode(http.StatusNoContent)
 }
 
 func main() {
@@ -81,7 +85,7 @@ func main() {
 	}
 
 	config := &struct {
-		SrvConf ServerConfig          `yaml:"server"`
+		SrvConf ServerConfig          `yaml:"uploader"`
 		S3Conf  storage.StorageConfig `yaml:"s3"`
 	}{
 		SrvConf: ServerConfig{},

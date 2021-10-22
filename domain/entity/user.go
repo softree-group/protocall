@@ -6,8 +6,8 @@ import (
 )
 
 type User struct {
-	Username        string   `json:"name"`
-	Email           string   `json:"-"`
+	Username        string   `json:"username"`
+	Email           string   `json:"email"`
 	SessionID       string   `json:"-"`
 	AsteriskAccount string   `json:"id"`
 	Channel         *ari.Key `json:"-"`

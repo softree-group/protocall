@@ -1,12 +1,13 @@
 package app
 
 import (
-	"github.com/CyCoreSystems/ari/v5"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"protocall/application/applications"
 	"protocall/config"
 	"protocall/domain/repository"
+
+	"github.com/CyCoreSystems/ari/v5"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 type EventListener struct {
@@ -45,6 +46,12 @@ func (e EventListener) Listen() {
 				if err != nil {
 					logrus.Error("fail to delete bridge: ", err)
 				}
+
+				// ждать сохранения файлов от снупа
+
+				// отправить в s3
+
+				// отправить в translator
 
 				conference := e.reps.Conference.Get(value.Bridge.ID)
 				for _, user := range conference.Participants {

@@ -2,13 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/hashicorp/go-uuid"
-	"github.com/spf13/viper"
-	"github.com/valyala/fasthttp"
 	"protocall/application"
 	"protocall/config"
 	"protocall/domain/entity"
 	"time"
+
+	"github.com/hashicorp/go-uuid"
+	"github.com/spf13/viper"
+	"github.com/valyala/fasthttp"
 )
 
 const (

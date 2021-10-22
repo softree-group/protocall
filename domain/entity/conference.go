@@ -1,6 +1,10 @@
 package entity
 
-import "github.com/google/btree"
+import (
+	"time"
+
+	"github.com/google/btree"
+)
 
 type Conference struct {
 	ID           string  `json:"id"`
@@ -8,6 +12,7 @@ type Conference struct {
 	HostUserID   string  `json:"host_user_id"`
 	BridgeID     string  `json:"-"`
 	IsRecording  bool    `json:"is_recording"`
+	Start        time.Time
 }
 
 func (c Conference) Less(then btree.Item) bool {

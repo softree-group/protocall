@@ -3,16 +3,17 @@ package app
 import (
 	"errors"
 	"fmt"
-	"github.com/CyCoreSystems/ari/v5"
-	"github.com/hashicorp/go-uuid"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
-	"github.com/valyala/fasthttp"
 	"protocall/application/applications"
 	"protocall/config"
 	"protocall/domain/entity"
 	"protocall/domain/repository"
 	"time"
+
+	"github.com/CyCoreSystems/ari/v5"
+	"github.com/hashicorp/go-uuid"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+	"github.com/valyala/fasthttp"
 )
 
 type Conference struct {
@@ -31,6 +32,7 @@ func (c Conference) StartConference(user *entity.User) (*entity.Conference, erro
 		Participants: []*entity.User{user},
 		HostUserID:   user.AsteriskAccount,
 		BridgeID:     "",
+		Start:        time.Now(),
 	}
 	user.ConferenceID = id
 	c.reps.User.Save(user)
@@ -81,7 +83,7 @@ func postSnoop(id, snoopId, appArgs, app, spy, whisper string) (*fasthttp.Respon
 }
 
 func (c Conference) StartRecordUser(user *entity.User, conferenceID string) error {
-	resp, err := postSnoop(user.Channel.ID, fmt.Sprintf("%s_%v_%s", conferenceID, time.Now().UTC().Unix(), user.Username), "some", viper.GetString(config.ARISnoopyApplication), "in", "both")
+	resp, err := postSnoop(user.Channel.ID, fmt.Sprintf("%s_%v_%s", conferenceID, time.Now().UTC().Unix(), user.Username), user.SessionID, viper.GetString(config.ARISnoopyApplication), "in", "both")
 	fasthttp.ReleaseResponse(resp)
 	//logrus.Info("Channel: ", user.Channel)
 	//_, err := c.ari.Channel().Snoop(user.Channel, fmt.Sprintf("%s/%v_%s", conferenceID, time.Now().UTC().Unix(), "some"), &ari.SnoopOptions{
