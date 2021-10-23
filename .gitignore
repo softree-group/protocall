@@ -9,3 +9,4 @@ vendor/
 test_dir/
 **/build
 connector.yaml
+/protocall-front
