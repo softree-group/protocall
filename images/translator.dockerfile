@@ -1,4 +1,4 @@
-FROM golang:1.17.2 AS builder
+FROM golang:1.17 AS build
 
 WORKDIR /build
 
@@ -8,7 +8,7 @@ RUN GO111MODULE=on \
   CGO_ENABLED=0 \
   go build -o translator ./cmd/translator
 
-FROM alpine
+FROM alpine:3.14
 
 WORKDIR /app
 

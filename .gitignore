@@ -8,3 +8,4 @@ config.yaml
 vendor/
 test_dir/
 **/build
+connector.yaml
