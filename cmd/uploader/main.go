@@ -43,7 +43,6 @@ func (s *Server) upload(ctx *fasthttp.RequestCtx) {
 		ctx.Response.SetStatusCode(http.StatusBadRequest)
 		return
 	}
-	localFile := filepath.Join(s.root, from)
 
 	to := string(ctx.QueryArgs().Peek("to"))
 	if to == "" {
@@ -52,15 +51,9 @@ func (s *Server) upload(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	if err := s.storage.UploadFile(context.Background(), s.bucket, localFile, filepath.Join(to)); err != nil {
-		ctx.Response.SetStatusCode(http.StatusInternalServerError)
+	if err := s.storage.UploadFile(context.Background(), s.bucket, filepath.Join(s.root, from), filepath.Join(to)); err != nil {
 		fmt.Println(err)
-		return
-	}
-
-	if err := os.RemoveAll(localFile); err != nil {
 		ctx.Response.SetStatusCode(http.StatusInternalServerError)
-		fmt.Println(err)
 		return
 	}
 
