@@ -37,7 +37,6 @@ func (e *EventListener) Listen() {
 			logrus.Info("LEFT: ", value.Bridge.ChannelIDs)
 		}
 	}
-
 }
 
 var _ applications.EventListener = &EventListener{}

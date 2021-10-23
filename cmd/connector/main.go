@@ -7,11 +7,9 @@ import (
 	"protocall/internal/config"
 )
 
-func init() {
-	config.InitConfig()
-}
-
 func main() {
+	config.InitConfig()
+
 	app := application.New(infrastructure.New())
 
 	go handlers.ServeAPI(app)

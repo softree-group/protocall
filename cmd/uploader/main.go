@@ -90,25 +90,25 @@ func main() {
 		SrvConf: ServerConfig{},
 		S3Conf:  s3.StorageConfig{},
 	}
-	if err := yaml.Unmarshal(data, config); err != nil {
+	if err = yaml.Unmarshal(data, config); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 	config.S3Conf.AccessKey = os.Getenv("ACCESS_KEY")
 	config.S3Conf.SecretKey = os.Getenv("SECRET_KEY")
 
-	s3, err := s3.NewStorage(&config.S3Conf)
+	storage, err := s3.NewStorage(&config.S3Conf)
 	if err != nil {
 		fmt.Println("cannot connect to s3", err)
 		os.Exit(1)
 	}
 
-	srv := NewServer(s3, config.SrvConf.Root, config.S3Conf.Bucket)
+	srv := NewServer(storage, config.SrvConf.Root, config.S3Conf.Bucket)
 
 	r := router.New()
 	r.POST("/upload", srv.upload)
 
-	if err := fasthttp.ListenAndServe(fmt.Sprintf("%v:%v", config.SrvConf.Host, config.SrvConf.Port), r.Handler); err != nil {
+	if err = fasthttp.ListenAndServe(fmt.Sprintf("%v:%v", config.SrvConf.Host, config.SrvConf.Port), r.Handler); err != nil {
 		fmt.Println(err)
 	}
 }

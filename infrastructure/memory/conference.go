@@ -3,8 +3,10 @@ package memory
 import (
 	"protocall/domain/entity"
 	"protocall/domain/repository"
+	"protocall/internal/config"
 
 	"github.com/google/btree"
+	"github.com/spf13/viper"
 )
 
 type ConferenceMemory struct {
@@ -28,7 +30,7 @@ func (c ConferenceMemory) DeleteConference(conferenceID string) {
 }
 
 func NewConference() *ConferenceMemory {
-	return &ConferenceMemory{store: btree.New(32)}
+	return &ConferenceMemory{store: btree.New(viper.GetInt(config.Participant))}
 }
 
 var _ repository.Conference = &ConferenceMemory{}

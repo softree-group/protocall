@@ -15,10 +15,17 @@ import (
 func ServeAPI(apps *application.Applications) {
 	r := router.New()
 
-	compose := func(method func(string, fasthttp.RequestHandler), path string, handler func(ctx *fasthttp.RequestCtx, applications *application.Applications)) {
-		method(path, func(ctx *fasthttp.RequestCtx) {
-			handler(ctx, apps)
-		})
+	compose := func(
+		method func(string, fasthttp.RequestHandler),
+		path string,
+		handler func(ctx *fasthttp.RequestCtx, applications *application.Applications),
+	) {
+		method(
+			path,
+			func(ctx *fasthttp.RequestCtx) {
+				handler(ctx, apps)
+			},
+		)
 	}
 
 	r.GET("/logs", authRequired(logutils.GetLogs))

@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -16,10 +17,10 @@ type confError struct {
 	Error string
 }
 
-func addError(errors *[]confError, level string, error string) {
+func addError(errors *[]confError, level, err string) {
 	*errors = append(*errors, confError{
 		Level: level,
-		Error: error,
+		Error: err,
 	})
 }
 
@@ -39,11 +40,11 @@ func processErrors(errors []confError) {
 	}
 }
 
-func configErrorFormatter(key string, error string) string {
-	return fmt.Sprintf("[%s] %s", key, error)
+func configErrorFormatter(key, err string) string {
+	return fmt.Sprintf("[%s] %s", key, err)
 }
 
-func equal(parameter string, value interface{}, level func(key, error string), message string) {
+func equal(parameter string, value interface{}, level func(key, err string), message string) {
 	if v := viper.Get(parameter); v == value {
 		level(parameter, message)
 	}
@@ -52,14 +53,14 @@ func equal(parameter string, value interface{}, level func(key, error string), m
 func checkConfig() {
 	var errors []confError
 
-	pusher := func(level string, error string) {
-		addError(&errors, level, error)
+	pusher := func(level string, err string) {
+		addError(&errors, level, err)
 	}
-	fatal := func(key, error string) {
-		pusher(errorFatal, configErrorFormatter(key, error))
+	fatal := func(key, err string) {
+		pusher(errorFatal, configErrorFormatter(key, err))
 	}
-	warn := func(key, error string) {
-		pusher(errorWarn, configErrorFormatter(key, error))
+	warn := func(key, err string) {
+		pusher(errorWarn, configErrorFormatter(key, err))
 	}
 
 	equal(LogFile, "-", warn, "Вывод логов в STDOUT")
@@ -67,7 +68,7 @@ func checkConfig() {
 	equal(ARIUrl, "", fatal, "Не указан адрес астериска")
 	equal(ARIApplication, "", fatal, "Не указано название приложения астериска")
 	equal(ARISnoopyApplication, "", fatal, "Не указано название приложения астериска для записи")
-	equal(ARIWebsocketUrl, "", fatal, "Не указан адрес сокета астериска")
+	equal(ARIWebsocketURL, "", fatal, "Не указан адрес сокета астериска")
 	equal(ARIUser, "", fatal, "Не указан пользователь астериска")
 	equal(ARIPassword, "", fatal, "Не указан пароль пользователя астериска")
 	equal(ARIAccountsFile, "", fatal, "Не указан файл с аккаунтами астериска")

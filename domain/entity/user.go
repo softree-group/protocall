@@ -14,6 +14,6 @@ type User struct {
 	ConferenceID    string   `json:"conference_id"`
 }
 
-func (u User) Less(then btree.Item) bool {
+func (u *User) Less(then btree.Item) bool {
 	return u.SessionID < then.(*User).SessionID
 }

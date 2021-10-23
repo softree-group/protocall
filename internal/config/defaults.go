@@ -16,7 +16,7 @@ func ariDefaults() {
 	viper.SetDefault(ARIUser, "")
 	viper.SetDefault(ARIPassword, "")
 	viper.SetDefault(ARIUrl, "")
-	viper.SetDefault(ARIWebsocketUrl, "")
+	viper.SetDefault(ARIWebsocketURL, "")
 	viper.SetDefault(ARIAccountsFile, "")
 }
 
@@ -30,12 +30,13 @@ func serverDefaults() {
 	viper.SetDefault(ServerIP, "0.0.0.0")
 	viper.SetDefault(ServerPort, "9595")
 	viper.SetDefault(ServerDomain, "")
+	viper.SetDefault(Participant, 32) //nolint:gomnd
 }
 
 func uploaderDefaults() {
-	viper.SetDefault(UploaderTimeout, 3)
+	viper.SetDefault(UploaderTimeout, 3) //nolint:gomnd
 }
 
 func translatorDefaults() {
-	viper.SetDefault(TranslatorTimeout, 3)
+	viper.SetDefault(TranslatorTimeout, 3) //nolint:gomnd
 }

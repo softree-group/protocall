@@ -3,8 +3,10 @@ package memory
 import (
 	"protocall/domain/entity"
 	"protocall/domain/repository"
+	"protocall/internal/config"
 
 	"github.com/google/btree"
+	"github.com/spf13/viper"
 )
 
 type UserMemory struct {
@@ -13,7 +15,7 @@ type UserMemory struct {
 
 func NewUser() *UserMemory {
 	return &UserMemory{
-		store: btree.New(32),
+		store: btree.New(viper.GetInt(config.Participant)),
 	}
 }
 

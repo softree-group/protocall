@@ -10,7 +10,7 @@ func NewBridge() *Bridge {
 	return &Bridge{}
 }
 
-func (b *Bridge) CreateBridge(hostUsername string, bridgeID string) {
+func (b *Bridge) CreateBridge(hostUsername, bridgeID string) {
 	b.bridgeID = bridgeID
 }
 

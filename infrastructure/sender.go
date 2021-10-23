@@ -6,6 +6,4 @@ func NewSender() *Sender {
 	return &Sender{}
 }
 
-func (s *Sender) Send() {
-	return
-}
+func (s *Sender) Send() {}

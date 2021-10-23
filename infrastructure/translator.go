@@ -60,15 +60,19 @@ func (t *Translator) Translate(u *entity.User, c *entity.Conference, recordPath 
 		return err
 	}
 
-	if resp, err := t.c.Post(
+	resp, err := t.c.Post(
 		fmt.Sprintf("%v/translate", t.addr),
 		"application/json",
 		bytes.NewReader(body),
-	); resp.StatusCode != http.StatusOK || err != nil {
-		if err != nil {
-			errTranslate = fmt.Errorf("%w: %v", errTranslate, err)
-		}
+	)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
 		return errTranslate
 	}
+
 	return nil
 }

@@ -37,8 +37,8 @@ func test(ctx *fasthttp.RequestCtx) {
 func main() {
 	r := router.New()
 	r.POST("/translations", test)
-
-	if err := fasthttp.ListenAndServe(fmt.Sprintf("%v:%v", "127.0.0.1", 8181), r.Handler); err != nil {
+	port := 8181
+	if err := fasthttp.ListenAndServe(fmt.Sprintf("%v:%v", "127.0.0.1", port), r.Handler); err != nil {
 		fmt.Println(err)
 	}
 }

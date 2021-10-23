@@ -4,7 +4,7 @@ const (
 	ARIApplication       = "ari.application"
 	ARISnoopyApplication = "ari.snoopy_application"
 	ARIUrl               = "ari.url"
-	ARIWebsocketUrl      = "ari.ws_url"
+	ARIWebsocketURL      = "ari.ws_url"
 	ARIUser              = "ari.user"
 	ARIPassword          = "ari.password"
 	ARIAccountsFile      = "ari.account_file"
@@ -16,6 +16,7 @@ const (
 	ServerIP     = "server.ip"
 	ServerAPIKey = "server.api_key"
 	ServerDomain = "server.domain"
+	Participant  = "server.participant"
 
 	UploaderHost    = "uploader.host"
 	UploaderPort    = "uploader.port"

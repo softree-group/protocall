@@ -26,7 +26,7 @@ func New(reps repository.Repositories) *Applications {
 	ariClient, err := native.Connect(&native.Options{
 		Application:  viper.GetString(config.ARIApplication),
 		URL:          viper.GetString(config.ARIUrl),
-		WebsocketURL: viper.GetString(config.ARIWebsocketUrl),
+		WebsocketURL: viper.GetString(config.ARIWebsocketURL),
 		Username:     viper.GetString(config.ARIUser),
 		Password:     viper.GetString(config.ARIPassword),
 	})

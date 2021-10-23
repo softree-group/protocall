@@ -32,7 +32,7 @@ func NewUploader(config *UploaderConfig) *Uploader {
 }
 
 func (u *Uploader) Upload(from, to string) error {
-	if resp, err := u.httpClient.Post(
+	resp, err := u.httpClient.Post(
 		fmt.Sprintf("%v/upload?from=%v&to=%v",
 			u.addr,
 			from,
@@ -40,13 +40,15 @@ func (u *Uploader) Upload(from, to string) error {
 		),
 		"",
 		nil,
-	); resp.StatusCode != http.StatusNoContent || err != nil {
-		errUploadFile = fmt.Errorf("%w: %v", errUploadFile, from)
-		if err != nil {
-			errUploadFile = fmt.Errorf("%w: %v", errUploadFile, err)
-
-		}
+	)
+	if err != nil {
 		return errUploadFile
 	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		return errUploadFile
+	}
+
 	return nil
 }

@@ -52,7 +52,7 @@ func (a *AsteriskAccount) Get(account string) *entity.AsteriskAccount {
 	return a.reps.GetAccount(account)
 }
 
-func (a *AsteriskAccount) Take(account string, userID string) {
+func (a *AsteriskAccount) Take(account, userID string) {
 	a.reps.TakeAccount(account, userID)
 }
 

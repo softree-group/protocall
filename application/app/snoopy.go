@@ -14,6 +14,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+const argsNum = 2
+
 type Snoopy struct {
 	ari ari.Client
 }
@@ -22,7 +24,7 @@ func NewSnoopy() *Snoopy {
 	ariClient, err := native.Connect(&native.Options{
 		Application:  viper.GetString(config.ARISnoopyApplication),
 		URL:          viper.GetString(config.ARIUrl),
-		WebsocketURL: viper.GetString(config.ARIWebsocketUrl),
+		WebsocketURL: viper.GetString(config.ARIWebsocketURL),
 		Username:     viper.GetString(config.ARIUser),
 		Password:     viper.GetString(config.ARIPassword),
 	})
@@ -73,7 +75,7 @@ func (s *Snoopy) listen() {
 	start := s.ari.Bus().Subscribe(nil, ari.Events.StasisStart)
 	for event := range start.Events() {
 		value := event.(*ari.StasisStart)
-		if len(value.Args) < 2 {
+		if len(value.Args) < argsNum {
 			logrus.Error("snoop has received invalid Args")
 			return
 		}
@@ -87,7 +89,7 @@ func (s *Snoopy) listen() {
 				"%v/%v/%v.wav",
 				value.Args[0],
 				value.Args[1],
-				strconv.FormatInt(time.Time(value.Timestamp).Unix(), 10)),
+				strconv.FormatInt(time.Time(value.Timestamp).Unix(), 10)), //nolint:gomnd
 		)
 	}
 }

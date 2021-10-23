@@ -22,7 +22,6 @@ func NewConnector(client ari.Client, bridgeStore repository.Bridge) *Connector {
 }
 
 func (c *Connector) CreateBridgeFrom(channel *ari.ChannelHandle) (*ari.BridgeHandle, error) {
-
 	key := channel.Key().New(ari.BridgeKey, channel.ID())
 
 	bridge, err := c.ari.Bridge().Create(key, "video_sfu", key.ID)
@@ -41,10 +40,10 @@ func (c *Connector) HasBridge() bool {
 	return bID != ""
 }
 
-func (c *Connector) getBridge(ID string) *ari.BridgeHandle {
+func (c *Connector) getBridge(id string) *ari.BridgeHandle {
 	key := &ari.Key{
 		Kind:                 ari.BridgeKey,
-		ID:                   ID,
+		ID:                   id,
 		Node:                 "",
 		Dialog:               "",
 		App:                  viper.GetString(config.ARIApplication),
@@ -56,10 +55,10 @@ func (c *Connector) getBridge(ID string) *ari.BridgeHandle {
 	return c.ari.Bridge().Get(key)
 }
 
-func (c *Connector) CreateBridge(ID string) (*ari.BridgeHandle, error) {
+func (c *Connector) CreateBridge(id string) (*ari.BridgeHandle, error) {
 	key := &ari.Key{
 		Kind:                 ari.BridgeKey,
-		ID:                   ID,
+		ID:                   id,
 		Node:                 "",
 		Dialog:               "",
 		App:                  viper.GetString(config.ARIApplication),

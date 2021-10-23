@@ -42,12 +42,7 @@ func authRequired(next fasthttp.RequestHandler) fasthttp.RequestHandler {
 func prefixMiddleware(prefix string) func(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(next fasthttp.RequestHandler) fasthttp.RequestHandler {
 		return func(ctx *fasthttp.RequestCtx) {
-			uri := string(ctx.Request.RequestURI())
-			if strings.Contains(uri, prefix) {
-				uri = strings.Replace(uri, prefix, "/", 1)
-			}
-			ctx.Request.SetRequestURI(uri)
-
+			ctx.Request.SetRequestURI(strings.Replace(string(ctx.Request.RequestURI()), prefix, "/", 1))
 			next(ctx)
 		}
 	}

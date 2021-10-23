@@ -3,6 +3,7 @@ package app
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/CyCoreSystems/ari/v5"
@@ -23,8 +24,8 @@ type Conference struct {
 	ari  ari.Client
 }
 
-func NewConference(reps repository.Repositories, ari ari.Client) *Conference {
-	return &Conference{reps: reps, ari: ari}
+func NewConference(reps repository.Repositories, ariClient ari.Client) *Conference {
+	return &Conference{reps: reps, ari: ariClient}
 }
 
 func (c *Conference) RemoveParticipant(user *entity.User, meetID string) {
@@ -60,19 +61,26 @@ func (c *Conference) IsExist(meetID string) bool {
 	return c.reps.GetConference(meetID) != nil
 }
 
-func postSnoop(id, snoopId, appArgs, app, spy, whisper string) (*fasthttp.Response, error) {
+func postSnoop(id, snoopID, appArgs, app, spy, whisper string) (*fasthttp.Response, error) {
 	clientt := &fasthttp.Client{}
 	req := fasthttp.AcquireRequest()
 	resp := fasthttp.AcquireResponse()
 	defer fasthttp.ReleaseRequest(req)
 
 	req.Header.SetMethod("POST")
-	req.SetRequestURI("http://pbx.softex-team.ru:10088/ari/channels/" + id + "/snoop?api_key=" + viper.GetString(config.ARIUser) + ":" + viper.GetString(config.ARIPassword))
-	req.SetBodyString(fmt.Sprintf(`{"snoopId": "%s",
+	req.SetRequestURI(
+		"http://pbx.softex-team.ru:10088/ari/channels/" +
+			id +
+			"/snoop?api_key=" +
+			viper.GetString(config.ARIUser) +
+			":" +
+			viper.GetString(config.ARIPassword),
+	)
+	req.SetBodyString(fmt.Sprintf(`{"snoopID": "%s",
 "app":  "%s",
 "spy":  "%s",
 "whisper":  "%s",
-"appArgs":  "%s"}`, snoopId, app, spy, whisper, appArgs))
+"appArgs":  "%s"}`, snoopID, app, spy, whisper, appArgs))
 	req.Header.SetContentType("application/json")
 	err := clientt.Do(req, resp)
 	logrus.Info("REQ: ", req.String())
@@ -80,14 +88,21 @@ func postSnoop(id, snoopId, appArgs, app, spy, whisper string) (*fasthttp.Respon
 		logrus.Errorf("Сетевая ошибка по пути")
 		return resp, err
 	}
-	if resp.StatusCode() >= 400 {
+	if resp.StatusCode() >= http.StatusBadRequest {
 		logrus.Warnf("Сервер ответил %d", resp.StatusCode())
 	}
 	return resp, err
 }
 
 func (c *Conference) StartRecordUser(user *entity.User, conferenceID string) error {
-	resp, err := postSnoop(user.Channel.ID, fmt.Sprintf("%s_%v_%s", conferenceID, time.Now().UTC().Unix(), user.Username), user.SessionID, viper.GetString(config.ARISnoopyApplication), "in", "both")
+	resp, err := postSnoop(
+		user.Channel.ID,
+		fmt.Sprintf("%s_%v_%s", conferenceID, time.Now().UTC().Unix(), user.Username),
+		user.SessionID,
+		viper.GetString(config.ARISnoopyApplication),
+		"in",
+		"both",
+	)
 	fasthttp.ReleaseResponse(resp)
 	return err
 }

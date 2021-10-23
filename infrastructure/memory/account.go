@@ -3,10 +3,12 @@ package memory
 import (
 	"protocall/domain/entity"
 	"protocall/domain/repository"
+	"protocall/internal/config"
 	"sync"
 
 	"github.com/google/btree"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 type AsteriskAccountMemory struct {
@@ -17,12 +19,12 @@ type AsteriskAccountMemory struct {
 func NewAsteriskAccount() *AsteriskAccountMemory {
 	repo := &AsteriskAccountMemory{
 		lock:  &sync.RWMutex{},
-		store: btree.New(32),
+		store: btree.New(viper.GetInt(config.Participant)),
 	}
 	return repo
 }
 
-func (a AsteriskAccountMemory) GetFree() *entity.AsteriskAccount {
+func (a *AsteriskAccountMemory) GetFree() *entity.AsteriskAccount {
 	var freeAccount *entity.AsteriskAccount
 
 	a.store.Ascend(func(item btree.Item) bool {
@@ -40,7 +42,7 @@ func (a AsteriskAccountMemory) GetFree() *entity.AsteriskAccount {
 	return freeAccount
 }
 
-func (a AsteriskAccountMemory) TakeAccount(account string, userID string) {
+func (a *AsteriskAccountMemory) TakeAccount(account, userID string) {
 	item := a.store.Get(&entity.AsteriskAccount{
 		Username: account,
 	})
@@ -53,11 +55,11 @@ func (a AsteriskAccountMemory) TakeAccount(account string, userID string) {
 	a.store.ReplaceOrInsert(accountItem)
 }
 
-func (a AsteriskAccountMemory) FreeAccount(account string) {
+func (a *AsteriskAccountMemory) FreeAccount(account string) {
 	a.TakeAccount(account, "")
 }
 
-func (a AsteriskAccountMemory) GetAccount(account string) *entity.AsteriskAccount {
+func (a *AsteriskAccountMemory) GetAccount(account string) *entity.AsteriskAccount {
 	item := a.store.Get(&entity.AsteriskAccount{
 		Username: account,
 	})
@@ -68,8 +70,8 @@ func (a AsteriskAccountMemory) GetAccount(account string) *entity.AsteriskAccoun
 	return item.(*entity.AsteriskAccount)
 }
 
-func (a AsteriskAccountMemory) SaveAccount(account entity.AsteriskAccount) {
+func (a *AsteriskAccountMemory) SaveAccount(account entity.AsteriskAccount) {
 	a.store.ReplaceOrInsert(&account)
 }
 
-var _ repository.AsteriskAccountRepository = AsteriskAccountMemory{}
+var _ repository.AsteriskAccountRepository = &AsteriskAccountMemory{}

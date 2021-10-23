@@ -7,4 +7,4 @@ config.yaml
 .DS_Store
 vendor/
 test_dir/
-build_dir/
+**/build
