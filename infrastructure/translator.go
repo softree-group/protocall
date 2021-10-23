@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"protocall/domain/entity"
 	"time"
+
+	"protocall/api"
+	"protocall/domain/entity"
 )
 
 var (
@@ -34,26 +36,14 @@ func NewTranslator(config *TranslatorConfig) *Translator {
 	}
 }
 
-type user struct {
-	Username string `json:"username" binding:"required"`
-	Email    string `json:"email"`
-	Path     string `json:"path" binding:"required"`
-}
-
-type translatorReq struct {
-	ConfID    string    `json:"conf_id" binding:"required"`
-	StartTime time.Time `json:"start" binding:"required"`
-	User      user
-}
-
 func (t *Translator) Translate(u *entity.User, c *entity.Conference, recordPath string) error {
-	body, err := json.Marshal(translatorReq{
+	body, err := json.Marshal(api.TranslatorRequest{
 		ConfID:    c.ID,
 		StartTime: c.Start,
-		User: user{
-			u.Username,
-			u.Email,
-			recordPath,
+		User: api.User{
+			Username: u.Username,
+			Email:    u.Email,
+			Path:     recordPath,
 		},
 	})
 	if err != nil {

@@ -160,7 +160,13 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		})
 
 		apps.Conference.Delete(user.ConferenceID)
-		return
+	}
+
+	if conference.IsRecording {
+		if err := apps.Conference.UploadRecord(user, user.ConferenceID); err != nil {
+			ctx.SetStatusCode(http.StatusInternalServerError)
+			return
+		}
 	}
 
 	// TODO: send socket event about leave participant

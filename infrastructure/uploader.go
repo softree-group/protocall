@@ -31,12 +31,12 @@ func NewUploader(config *UploaderConfig) *Uploader {
 	}
 }
 
-func (u *Uploader) Upload(from, to string) error {
+func (u *Uploader) Upload(src, dest string) error {
 	resp, err := u.httpClient.Post(
 		fmt.Sprintf("%v/upload?from=%v&to=%v",
 			u.addr,
-			from,
-			to,
+			src,
+			dest,
 		),
 		"",
 		nil,

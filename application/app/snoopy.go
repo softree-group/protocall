@@ -2,10 +2,7 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"protocall/internal/config"
-	"strconv"
-	"time"
 
 	"github.com/CyCoreSystems/ari/v5"
 	"github.com/CyCoreSystems/ari/v5/client/native"
@@ -13,8 +10,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
-
-const argsNum = 2
 
 type Snoopy struct {
 	ari ari.Client
@@ -37,7 +32,7 @@ func NewSnoopy() *Snoopy {
 	}
 }
 
-func (s *Snoopy) channelHandler(channel *ari.ChannelHandle, location string) {
+func (s *Snoopy) channelHandler(channel *ari.ChannelHandle, recordPath string) {
 	sub := channel.Subscribe(ari.Events.All)
 	end := channel.Subscribe(ari.Events.StasisEnd)
 
@@ -59,7 +54,7 @@ func (s *Snoopy) channelHandler(channel *ari.ChannelHandle, location string) {
 				return
 			}
 
-			err = res.Save(location)
+			err = res.Save(recordPath)
 			if err != nil {
 				logrus.Error("fail to save result record for channel ", channel.ID(), ". Error: ", err)
 				return
@@ -75,21 +70,13 @@ func (s *Snoopy) listen() {
 	start := s.ari.Bus().Subscribe(nil, ari.Events.StasisStart)
 	for event := range start.Events() {
 		value := event.(*ari.StasisStart)
-		if len(value.Args) < argsNum {
-			logrus.Error("snoop has received invalid Args")
-			return
-		}
 
 		channel := s.ari.Channel().Get(value.Key(ari.ChannelKey, value.Channel.ID))
 		logrus.Info("snoop channel: ", channel.ID())
 
 		go s.channelHandler(
 			channel,
-			fmt.Sprintf(
-				"%v/%v/%v.wav",
-				value.Args[0],
-				value.Args[1],
-				strconv.FormatInt(time.Time(value.Timestamp).Unix(), 10)), //nolint:gomnd
+			value.Args[0],
 		)
 	}
 }

@@ -24,7 +24,7 @@ func createCookie() *fasthttp.Cookie {
 	authCookie := fasthttp.Cookie{}
 	authCookie.SetKey(sessionCookie)
 	authCookie.SetValue(token)
-	authCookie.SetDomain("." + viper.GetString(config.ServerDomain))
+	authCookie.SetDomain(viper.GetString(config.ServerDomain))
 	authCookie.SetPath("/")
 	authCookie.SetExpire(time.Now().Add(day))
 	authCookie.SetHTTPOnly(true)

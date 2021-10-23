@@ -18,7 +18,6 @@ type Applications struct {
 	AsteriskAccount applications.AsteriskAccount
 	Conference      applications.Conference
 	Connector       applications.Connector
-	Record          applications.Record
 }
 
 func New(reps repository.Repositories) *Applications {
@@ -44,6 +43,5 @@ func New(reps repository.Repositories) *Applications {
 		AsteriskAccount: app.NewAsteriskAccount(reps, viper.GetString(config.ARIAccountsFile)),
 		User:            app.NewUser(reps),
 		Connector:       connector,
-		Record:          app.NewRecord(reps),
 	}
 }
