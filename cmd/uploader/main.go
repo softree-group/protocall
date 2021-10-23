@@ -58,7 +58,7 @@ func (s *Server) upload(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	if err := os.Remove(localFile); err != nil {
+	if err := os.RemoveAll(localFile); err != nil {
 		ctx.Response.SetStatusCode(http.StatusInternalServerError)
 		fmt.Println(err)
 		return
