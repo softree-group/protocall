@@ -1,0 +1,33 @@
+version: '3.9'
+services:
+  connector:
+    build:
+      context: ../
+      dockerfile: images/connector.dockerfile
+    image: connector
+    volumes:
+      - ${PWD}/accounts.json:/app/accounts.json
+      - ${PWD}/connector.yaml:/app/config.yaml
+    networks:
+      - protocall
+  translator:
+    build:
+      context: ../
+      dockerfile: images/translator.dockerfile
+    image: translator
+    networks:
+      - protocall
+  frontend:
+    image: nginx:latest
+    volumes:
+      - ${PWD}/protocall-front/build:/var/www/html
+      - ${PWD}/configs/protocall.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - 127.0.0.1:80:80
+    networks:
+      - protocall
+    depends_on:
+      - connector
+
+networks:
+  protocall:

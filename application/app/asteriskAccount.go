@@ -2,41 +2,20 @@ package app
 
 import (
 	"encoding/json"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
 	"protocall/application/applications"
 	"protocall/domain/entity"
 	"protocall/domain/repository"
+
+	"github.com/sirupsen/logrus"
 )
 
 type AsteriskAccount struct {
-	reps *repository.Repositories
+	reps repository.AsteriskAccountRepository
 }
 
-func NewAsteriskAccount(reps *repository.Repositories) *AsteriskAccount {
-	return &AsteriskAccount{
-		reps: reps,
-	}
-}
-
-func (a AsteriskAccount) GetFree() *entity.AsteriskAccount {
-	return a.reps.AsteriskAccount.GetFree()
-}
-
-func (a AsteriskAccount) Get(account string) *entity.AsteriskAccount {
-	return a.reps.AsteriskAccount.Get(account)
-}
-
-func (a AsteriskAccount) Take(account string, userID string) {
-	a.reps.AsteriskAccount.Take(account, userID)
-}
-
-func (a AsteriskAccount) Free(account string) {
-	a.reps.AsteriskAccount.Free(account)
-}
-
-func (a AsteriskAccount) Parse(accountsFile string) {
+func (a *AsteriskAccount) parse(accountsFile string) {
 	jsonFile, err := os.Open(accountsFile)
 	if err != nil {
 		logrus.Fatal("fail to open file ", accountsFile, ": ", err)
@@ -53,8 +32,32 @@ func (a AsteriskAccount) Parse(accountsFile string) {
 	}
 
 	for _, account := range accounts {
-		a.reps.AsteriskAccount.Save(account)
+		a.reps.SaveAccount(account)
 	}
 }
 
-var _ applications.AsteriskAccount = AsteriskAccount{}
+func NewAsteriskAccount(reps repository.AsteriskAccountRepository, accountsFile string) *AsteriskAccount {
+	r := &AsteriskAccount{
+		reps: reps,
+	}
+	r.parse(accountsFile)
+	return r
+}
+
+func (a *AsteriskAccount) GetFree() *entity.AsteriskAccount {
+	return a.reps.GetFree()
+}
+
+func (a *AsteriskAccount) Get(account string) *entity.AsteriskAccount {
+	return a.reps.GetAccount(account)
+}
+
+func (a *AsteriskAccount) Take(account, userID string) {
+	a.reps.TakeAccount(account, userID)
+}
+
+func (a *AsteriskAccount) Free(account string) {
+	a.reps.FreeAccount(account)
+}
+
+var _ applications.AsteriskAccount = &AsteriskAccount{}

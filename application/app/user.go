@@ -7,23 +7,23 @@ import (
 )
 
 type User struct {
-	reps *repository.Repositories
+	reps repository.User
 }
 
-func (u User) Find(sessionID string) *entity.User {
-	return u.reps.User.Find(sessionID)
-}
-
-func (u User) Save(user *entity.User) {
-	u.reps.User.Save(user)
-}
-
-func (u User) Delete(sessionID string) {
-	u.reps.User.Delete(sessionID)
-}
-
-func NewUser(reps *repository.Repositories) *User {
+func NewUser(reps repository.User) *User {
 	return &User{reps: reps}
+}
+
+func (u *User) Find(sessionID string) *entity.User {
+	return u.reps.FindUser(sessionID)
+}
+
+func (u *User) Save(user *entity.User) {
+	u.reps.SaveUser(user)
+}
+
+func (u *User) Delete(sessionID string) {
+	u.reps.DeleteUser(sessionID)
 }
 
 var _ applications.User = &User{}

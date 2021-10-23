@@ -3,75 +3,84 @@ package app
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/CyCoreSystems/ari/v5"
 	"github.com/google/btree"
 	"github.com/hashicorp/go-uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/valyala/fasthttp"
+
 	"protocall/application/applications"
-	"protocall/config"
 	"protocall/domain/entity"
 	"protocall/domain/repository"
-	"time"
+	"protocall/internal/config"
 )
 
 type Conference struct {
-	reps *repository.Repositories
+	reps repository.Repositories
 	ari  ari.Client
 }
 
-func (c Conference) RemoveParticipant(user *entity.User, meetID string) {
-	conference := c.reps.Conference.Get(meetID)
+func NewConference(reps repository.Repositories, ariClient ari.Client) *Conference {
+	return &Conference{reps: reps, ari: ariClient}
+}
+
+func (c *Conference) RemoveParticipant(user *entity.User, meetID string) {
+	conference := c.reps.GetConference(meetID)
 	if conference == nil {
 		return
 	}
-
 }
 
-func NewConference(reps *repository.Repositories, ari ari.Client) *Conference {
-	return &Conference{reps: reps, ari: ari}
-}
-
-func (c Conference) StartConference(user *entity.User) (*entity.Conference, error) {
+func (c *Conference) StartConference(user *entity.User) (*entity.Conference, error) {
 	id, _ := uuid.GenerateUUID()
 	conference := entity.NewConference(id, user.AsteriskAccount)
 	conference.Participants.ReplaceOrInsert(user)
 	user.ConferenceID = id
-	c.reps.User.Save(user)
-	c.reps.Conference.Save(conference)
+	c.reps.SaveUser(user)
+	c.reps.SaveConference(conference)
 	return conference, nil
 }
 
-func (c Conference) JoinToConference(user *entity.User, meetID string) (*entity.Conference, error) {
-	conference := c.reps.Conference.Get(meetID)
+func (c *Conference) JoinToConference(user *entity.User, meetID string) (*entity.Conference, error) {
+	conference := c.reps.GetConference(meetID)
 	if conference == nil {
 		return nil, errors.New("no such meeting")
 	}
 	conference.Participants.ReplaceOrInsert(user)
 	user.ConferenceID = meetID
-	c.reps.User.Save(user)
-	c.reps.Conference.Save(conference)
+	c.reps.SaveUser(user)
+	c.reps.SaveConference(conference)
 	return conference, nil
 }
 
-func (c Conference) IsExist(meetID string) bool {
-	return c.reps.Conference.Get(meetID) != nil
+func (c *Conference) IsExist(meetID string) bool {
+	return c.reps.GetConference(meetID) != nil
 }
 
-func postSnoop(id, snoopId, appArgs, app, spy, whisper string) (*fasthttp.Response, error) {
+func postSnoop(id, snoopID, appArgs, app, spy, whisper string) (*fasthttp.Response, error) {
 	clientt := &fasthttp.Client{}
 	req := fasthttp.AcquireRequest()
 	resp := fasthttp.AcquireResponse()
 	defer fasthttp.ReleaseRequest(req)
 
 	req.Header.SetMethod("POST")
-	req.SetRequestURI("http://pbx.softex-team.ru:10088/ari/channels/" + id + "/snoop?api_key=" + viper.GetString(config.ARIUser) + ":" + viper.GetString(config.ARIPassword))
-	req.SetBodyString(fmt.Sprintf(`{"snoopId": "%s",
+	req.SetRequestURI(
+		"http://pbx.softex-team.ru:10088/ari/channels/" +
+			id +
+			"/snoop?api_key=" +
+			viper.GetString(config.ARIUser) +
+			":" +
+			viper.GetString(config.ARIPassword),
+	)
+	req.SetBodyString(fmt.Sprintf(`{"snoopID": "%s",
 "app":  "%s",
 "spy":  "%s",
 "whisper":  "%s",
-"appArgs":  "%s"}`, snoopId, app, spy, whisper, appArgs))
+"appArgs":  "%s"}`, snoopID, app, spy, whisper, appArgs))
 	req.Header.SetContentType("application/json")
 	err := clientt.Do(req, resp)
 	logrus.Info("REQ: ", req.String())
@@ -79,27 +88,31 @@ func postSnoop(id, snoopId, appArgs, app, spy, whisper string) (*fasthttp.Respon
 		logrus.Errorf("Сетевая ошибка по пути")
 		return resp, err
 	}
-	if resp.StatusCode() >= 400 {
+	if resp.StatusCode() >= http.StatusBadRequest {
 		logrus.Warnf("Сервер ответил %d", resp.StatusCode())
 	}
 	return resp, err
 }
 
-func (c Conference) StartRecordUser(user *entity.User, conferenceID string) error {
-	resp, err := postSnoop(user.Channel.ID, fmt.Sprintf("%s_%v_%s", conferenceID, time.Now().UTC().Unix(), user.Username), "some", viper.GetString(config.ARISnoopyApplication), "in", "both")
+func (c *Conference) StartRecordUser(user *entity.User, conferenceID string) error {
+	user.RecordPath = fmt.Sprintf("%v/%v/%v.wav", conferenceID, user.Username, time.Now().UTC().Unix())
+
+	fmt.Println("HHHHHHH", user.RecordPath)
+
+	resp, err := postSnoop(
+		user.Channel.ID,
+		fmt.Sprintf("%s_%v_%s", conferenceID, time.Now().UTC().Unix(), user.Username),
+		user.RecordPath,
+		viper.GetString(config.ARISnoopyApplication),
+		"in",
+		"both",
+	)
 	fasthttp.ReleaseResponse(resp)
-	//logrus.Info("Channel: ", user.Channel)
-	//_, err := c.ari.Channel().Snoop(user.Channel, fmt.Sprintf("%s/%v_%s", conferenceID, time.Now().UTC().Unix(), "some"), &ari.SnoopOptions{
-	//	App:     viper.GetString(config.ARISnoopyApplication),
-	//	AppArgs: user.Channel.ID,
-	//	Spy:     "in",
-	//	Whisper: "both",
-	//})
 	return err
 }
 
-func (c Conference) StartRecord(user *entity.User, meetID string) error {
-	conference := c.reps.Conference.Get(meetID)
+func (c *Conference) StartRecord(user *entity.User, meetID string) error {
+	conference := c.reps.GetConference(meetID)
 	if conference == nil {
 		return errors.New("does not exist")
 	}
@@ -109,7 +122,7 @@ func (c Conference) StartRecord(user *entity.User, meetID string) error {
 	}
 
 	conference.IsRecording = true
-	c.reps.Conference.Save(conference)
+	c.reps.SaveConference(conference)
 
 	conference.Participants.Ascend(func(item btree.Item) bool {
 		if item == nil {
@@ -129,12 +142,12 @@ func (c Conference) StartRecord(user *entity.User, meetID string) error {
 	return nil
 }
 
-func (c Conference) Get(meetID string) *entity.Conference {
-	return c.reps.Conference.Get(meetID)
+func (c *Conference) Get(meetID string) *entity.Conference {
+	return c.reps.GetConference(meetID)
 }
 
-func (c Conference) Delete(meetID string) {
-	c.reps.Conference.Delete(meetID)
+func (c *Conference) Delete(meetID string) {
+	c.reps.DeleteConference(meetID)
 	err := c.ari.Bridge().Delete(&ari.Key{
 		Kind: ari.BridgeKey,
 		ID:   meetID,
@@ -145,4 +158,18 @@ func (c Conference) Delete(meetID string) {
 	}
 }
 
-var _ applications.Conference = Conference{}
+func (c *Conference) TranslateRecord(string) (*entity.Message, error) {
+	return nil, nil
+}
+
+func (c *Conference) UploadRecord(user *entity.User, meetID string) error {
+	if err := c.reps.Upload(user.RecordPath, user.RecordPath); err != nil {
+		logrus.Error(err)
+		return err
+	}
+	return nil
+}
+
+func (c *Conference) SendConference() {}
+
+var _ applications.Conference = &Conference{}

@@ -1,19 +1,20 @@
 package app
 
 import (
-	"github.com/CyCoreSystems/ari/v5"
-	"github.com/sirupsen/logrus"
 	"protocall/application/applications"
 	"protocall/domain/repository"
+
+	"github.com/CyCoreSystems/ari/v5"
+	"github.com/sirupsen/logrus"
 )
 
 type EventListener struct {
 	handler applications.CallHandler
 	ari     ari.Client
-	reps    *repository.Repositories
+	reps    repository.Repositories
 }
 
-func NewListener(reps *repository.Repositories, client ari.Client, handler applications.CallHandler) *EventListener {
+func NewListener(reps repository.Repositories, client ari.Client, handler applications.CallHandler) *EventListener {
 	return &EventListener{
 		handler: handler,
 		ari:     client,
@@ -21,7 +22,7 @@ func NewListener(reps *repository.Repositories, client ari.Client, handler appli
 	}
 }
 
-func (e EventListener) Listen() {
+func (e *EventListener) Listen() {
 	logrus.Info("Start listen...")
 	any := e.ari.Bus().Subscribe(nil, ari.Events.All)
 	leftBridge := e.ari.Bus().Subscribe(nil, ari.Events.ChannelLeftBridge)
@@ -36,7 +37,6 @@ func (e EventListener) Listen() {
 			logrus.Info("LEFT: ", value.Bridge.ChannelIDs)
 		}
 	}
-
 }
 
 var _ applications.EventListener = &EventListener{}

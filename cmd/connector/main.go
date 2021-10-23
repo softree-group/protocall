@@ -1,24 +1,18 @@
 package main
 
 import (
-	"github.com/spf13/viper"
 	"protocall/application"
-	"protocall/config"
 	"protocall/infrastructure"
 	"protocall/interfaces/handlers"
+	"protocall/internal/config"
 )
 
-func init() {
-	config.InitConfig()
-}
-
 func main() {
-	reps := infrastructure.New()
-	apps := application.New(reps)
+	config.InitConfig()
 
-	apps.AsteriskAccount.Parse(viper.GetString(config.ARIAccountsFile))
+	app := application.New(infrastructure.New())
 
-	go handlers.ServeAPI(apps)
-	go apps.Snoopy.Snoop()
-	apps.Listener.Listen()
+	go handlers.ServeAPI(app)
+	go app.Snoopy.Snoop()
+	app.Listener.Listen()
 }

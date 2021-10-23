@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/google/btree"
+	"net/http"
 	"protocall/application"
 	"protocall/domain/entity"
+
+	"github.com/google/btree"
 
 	"github.com/sirupsen/logrus"
 	"github.com/valyala/fasthttp"
@@ -13,7 +15,7 @@ import (
 func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	user := getUser(ctx, apps)
 	if user != nil {
-		ctx.Error("You are already signed in", 400)
+		ctx.Error("You are already signed in", http.StatusBadRequest)
 		return
 	}
 
@@ -24,12 +26,12 @@ func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 
 	conference, err := apps.Conference.StartConference(user)
 	if err != nil {
-		ctx.Error(err.Error(), 500)
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
 	_, err = apps.Connector.CreateBridge(conference.ID)
 	if err != nil {
-		ctx.Error(err.Error(), 500)
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -40,7 +42,7 @@ func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		"account":    account,
 	})
 	if err != nil {
-		ctx.Error(err.Error(), 500)
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -51,7 +53,7 @@ func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 func join(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	meetID := ctx.UserValue("meetID").(string)
 	if !apps.Conference.IsExist(meetID) {
-		ctx.Error("Conference does not exist", 404)
+		ctx.Error("Conference does not exist", http.StatusNotFound)
 		return
 	}
 
@@ -62,7 +64,7 @@ func join(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 
 	conference, err := apps.Conference.JoinToConference(user, meetID)
 	if err != nil {
-		ctx.Error(err.Error(), 400)
+		ctx.Error(err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -71,7 +73,7 @@ func join(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		"account":    account,
 	})
 	if err != nil {
-		ctx.Error(err.Error(), 500)
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -91,13 +93,13 @@ func getUser(ctx *fasthttp.RequestCtx, apps *application.Applications) *entity.U
 func ready(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	user := getUser(ctx, apps)
 	if user == nil {
-		ctx.Error("no session", 400)
+		ctx.Error("no session", http.StatusBadRequest)
 		return
 	}
 
 	channel, err := apps.Connector.CallAndConnect(user.AsteriskAccount, user.ConferenceID)
 	if err != nil {
-		ctx.Error(err.Error(), 400)
+		ctx.Error(err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -122,7 +124,7 @@ func ready(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	user := getUser(ctx, apps)
 	if user == nil {
-		ctx.SetStatusCode(400)
+		ctx.SetStatusCode(http.StatusBadRequest)
 		return
 	}
 
@@ -148,7 +150,9 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 			if participant == nil {
 				return false
 			}
-			apps.Connector.Disconnect(participant.ConferenceID, participant.Channel)
+			if err := apps.Connector.Disconnect(participant.ConferenceID, participant.Channel); err != nil {
+				logrus.Error("Fail to disconnect: ", err)
+			}
 			apps.AsteriskAccount.Free(user.AsteriskAccount)
 			apps.User.Delete(user.SessionID)
 			// TODO: send socket event about end conference
@@ -156,7 +160,13 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		})
 
 		apps.Conference.Delete(user.ConferenceID)
-		return
+	}
+
+	if conference.IsRecording {
+		if err := apps.Conference.UploadRecord(user, user.ConferenceID); err != nil {
+			ctx.SetStatusCode(http.StatusInternalServerError)
+			return
+		}
 	}
 
 	// TODO: send socket event about leave participant
@@ -167,7 +177,7 @@ func record(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 
 	err := apps.Conference.StartRecord(user, user.ConferenceID)
 	if err != nil {
-		ctx.SetStatusCode(403)
+		ctx.SetStatusCode(http.StatusForbidden)
 		logrus.Error("fail to start record: ", err)
 		return
 	}

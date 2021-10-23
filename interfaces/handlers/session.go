@@ -2,17 +2,20 @@ package handlers
 
 import (
 	"encoding/json"
+	"net/http"
+	"protocall/application"
+	"protocall/domain/entity"
+	"protocall/internal/config"
+	"time"
+
 	"github.com/hashicorp/go-uuid"
 	"github.com/spf13/viper"
 	"github.com/valyala/fasthttp"
-	"protocall/application"
-	"protocall/config"
-	"protocall/domain/entity"
-	"time"
 )
 
 const (
 	sessionCookie = "session_id"
+	day           = 24 * time.Hour
 )
 
 func createCookie() *fasthttp.Cookie {
@@ -21,9 +24,9 @@ func createCookie() *fasthttp.Cookie {
 	authCookie := fasthttp.Cookie{}
 	authCookie.SetKey(sessionCookie)
 	authCookie.SetValue(token)
-	authCookie.SetDomain("." + viper.GetString(config.ServerDomain))
+	authCookie.SetDomain(viper.GetString(config.ServerDomain))
 	authCookie.SetPath("/")
-	authCookie.SetExpire(time.Now().Add(24 * time.Hour))
+	authCookie.SetExpire(time.Now().Add(day))
 	authCookie.SetHTTPOnly(true)
 	authCookie.SetSameSite(fasthttp.CookieSameSiteLaxMode)
 	authCookie.SetSecure(false)
@@ -33,14 +36,14 @@ func createCookie() *fasthttp.Cookie {
 func session(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	sessionID := ctx.Request.Header.Cookie(sessionCookie)
 	if len(sessionID) == 0 {
-		ctx.SetStatusCode(204)
+		ctx.SetStatusCode(http.StatusNoContent)
 		return
 	}
 
 	user := apps.User.Find(string(sessionID))
 	if user == nil {
 		ctx.Response.Header.DelCookie(sessionCookie)
-		ctx.SetStatusCode(204)
+		ctx.SetStatusCode(http.StatusNoContent)
 		return
 	}
 
@@ -57,7 +60,7 @@ func session(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	conference := apps.Conference.Get(user.ConferenceID)
 	if conference == nil {
 		ctx.Response.Header.DelCookie(sessionCookie)
-		ctx.SetStatusCode(204)
+		ctx.SetStatusCode(http.StatusNoContent)
 		return
 	}
 
@@ -80,7 +83,7 @@ func createSession(ctx *fasthttp.RequestCtx, apps *application.Applications) (*e
 
 	err := json.Unmarshal(ctx.PostBody(), user)
 	if err != nil {
-		ctx.Error(err.Error(), 500)
+		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return nil, nil
 	}
 

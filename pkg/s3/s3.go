@@ -1,9 +1,8 @@
-package storage
+package s3
 
 import (
 	"context"
 	"io"
-	"protocall/domain/repository"
 
 	"github.com/minio/minio-go"
 )
@@ -16,20 +15,20 @@ type StorageConfig struct {
 	SecretKey  string
 }
 
-type s3client struct {
+type S3 struct {
 	client *minio.Client
 }
 
-func NewStorage(c *StorageConfig) (repository.VoiceStorage, error) {
+func NewStorage(c *StorageConfig) (*S3, error) {
 	mc, err := minio.New(c.Endpoint, c.AccessKey, c.SecretKey, !c.DisableSSL)
 	if err != nil {
 		return nil, err
 	}
 
-	return &s3client{client: mc}, nil
+	return &S3{client: mc}, nil
 }
 
-func (c *s3client) UploadFile(ctx context.Context, bucketName, localPath, remotePath string) error {
+func (c *S3) UploadFile(ctx context.Context, bucketName, localPath, remotePath string) error {
 	if _, err := c.client.FPutObjectWithContext(
 		ctx,
 		bucketName,
@@ -43,6 +42,6 @@ func (c *s3client) UploadFile(ctx context.Context, bucketName, localPath, remote
 	return nil
 }
 
-func (c *s3client) GetFile(ctx context.Context, bucketName, remotePath string) (io.ReadCloser, error) {
+func (c *S3) GetFile(ctx context.Context, bucketName, remotePath string) (io.ReadCloser, error) {
 	return c.client.GetObjectWithContext(ctx, bucketName, remotePath, minio.GetObjectOptions{})
 }

@@ -1,6 +1,12 @@
 package entity
 
-import "github.com/google/btree"
+import (
+	"protocall/internal/config"
+	"time"
+
+	"github.com/google/btree"
+	"github.com/spf13/viper"
+)
 
 type Conference struct {
 	ID           string       `json:"id"`
@@ -8,18 +14,20 @@ type Conference struct {
 	HostUserID   string       `json:"host_user_id"`
 	BridgeID     string       `json:"-"`
 	IsRecording  bool         `json:"is_recording"`
+	Start        time.Time
 }
 
-func NewConference(id string, hostUser string) *Conference {
+func NewConference(id, hostUser string) *Conference {
 	return &Conference{
 		ID:           id,
-		Participants: btree.New(32),
+		Participants: btree.New(viper.GetInt(config.Participant)),
 		HostUserID:   hostUser,
 		BridgeID:     id,
 		IsRecording:  false,
+		Start:        time.Now(),
 	}
 }
 
-func (c Conference) Less(then btree.Item) bool {
+func (c *Conference) Less(then btree.Item) bool {
 	return c.ID < then.(*Conference).ID
 }

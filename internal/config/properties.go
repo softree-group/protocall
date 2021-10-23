@@ -4,7 +4,7 @@ const (
 	ARIApplication       = "ari.application"
 	ARISnoopyApplication = "ari.snoopy_application"
 	ARIUrl               = "ari.url"
-	ARIWebsocketUrl      = "ari.ws_url"
+	ARIWebsocketURL      = "ari.ws_url"
 	ARIUser              = "ari.user"
 	ARIPassword          = "ari.password"
 	ARIAccountsFile      = "ari.account_file"
@@ -16,14 +16,13 @@ const (
 	ServerIP     = "server.ip"
 	ServerAPIKey = "server.api_key"
 	ServerDomain = "server.domain"
+	Participant  = "server.participant"
 
-	S3Bucket     = "s3.bucket"
-	S3Endpoint   = "s3.endpoint"
-	S3DisableSSL = "s3.disableSSL"
+	UploaderHost    = "uploader.host"
+	UploaderPort    = "uploader.port"
+	UploaderTimeout = "uplodaer.timeout"
 
-	UploaderHostConf = "uploader.host"
-	UploaderPortConf = "uploader.port"
-
-	TranslatorHostConf = "translator.host"
-	TranslatorPortConf = "translator.port"
+	TranslatorHost    = "translator.host"
+	TranslatorPort    = "translator.port"
+	TranslatorTimeout = "translator.timeout"
 )

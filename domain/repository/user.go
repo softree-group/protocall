@@ -5,7 +5,7 @@ import (
 )
 
 type User interface {
-	Find(sessionID string) *entity.User
-	Save(user *entity.User)
-	Delete(sessionID string)
+	FindUser(sessionID string) *entity.User
+	SaveUser(user *entity.User)
+	DeleteUser(sessionID string)
 }
