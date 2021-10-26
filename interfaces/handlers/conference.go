@@ -97,7 +97,7 @@ func ready(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		return
 	}
 
-	channel, err := apps.Connector.CallAndConnect(user.AsteriskAccount, user.ConferenceID)
+	channel, err := apps.Connector.CallAndConnect(user)
 	if err != nil {
 		ctx.Error(err.Error(), http.StatusBadRequest)
 		return
@@ -174,6 +174,10 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 
 func record(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	user := getUser(ctx, apps)
+	if user == nil {
+		ctx.Error("no user", 400)
+		return
+	}
 
 	err := apps.Conference.StartRecord(user, user.ConferenceID)
 	if err != nil {
@@ -181,4 +185,65 @@ func record(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		logrus.Error("fail to start record: ", err)
 		return
 	}
+}
+
+type UserInfo struct {
+	Name string `json:"name"`
+	ID   string `json:"id"`
+}
+
+type ConferenceInfo struct {
+	ID           string     `json:"id"`
+	HostID       string     `json:"host_id"`
+	Participants []UserInfo `json:"participants"`
+	IsRecording  bool       `json:"is_recording"`
+	StartedAt    int64      `json:"started_at"`
+}
+
+func info(ctx *fasthttp.RequestCtx, apps *application.Applications) {
+	user := getUser(ctx, apps)
+	if user == nil {
+		ctx.Error("no user", 400)
+		return
+	}
+
+	conference := apps.Conference.Get(user.ConferenceID)
+	if conference == nil {
+		ctx.Error("no conference", 400)
+		apps.AsteriskAccount.Free(user.AsteriskAccount)
+		apps.User.Delete(user.SessionID)
+		ctx.Response.Header.DelCookie(sessionCookie)
+		return
+	}
+
+	conferenceInfo := ConferenceInfo{
+		ID:           conference.ID,
+		HostID:       conference.HostUserID,
+		Participants: nil,
+		IsRecording:  conference.IsRecording,
+		StartedAt:    conference.Start.Unix(),
+	}
+
+	participants := make([]UserInfo, 0, conference.Participants.Len())
+
+	conference.Participants.Ascend(func(item btree.Item) bool {
+		if item == nil {
+			return false
+		}
+		user := item.(*entity.User)
+		if user == nil {
+			return false
+		}
+		participants = append(participants, UserInfo{
+			Name: user.Username,
+			ID:   user.AsteriskAccount,
+		})
+		return true
+	})
+
+	conferenceInfo.Participants = participants
+
+	body, _ := json.Marshal(conferenceInfo)
+	ctx.SetBody(body)
+	ctx.SetContentType("application/json")
 }

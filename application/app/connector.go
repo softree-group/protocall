@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"protocall/application/applications"
+	"protocall/domain/entity"
 	"protocall/domain/repository"
 	"protocall/internal/config"
 
@@ -70,8 +71,19 @@ func (c *Connector) CreateBridge(id string) (*ari.BridgeHandle, error) {
 	return c.ari.Bridge().Create(key, "mixing", key.ID)
 }
 
-func (c *Connector) CallAndConnect(account, bridgeID string) (*ari.Key, error) {
-	bridge := c.getBridge(bridgeID)
+func (c *Connector) CallAndConnect(user *entity.User) (*ari.Key, error) {
+	bridgeID := user.ConferenceID
+	account := user.AsteriskAccount
+	if user.Channel != nil {
+		ch := c.ari.Channel().Get(user.Channel)
+		if ch != nil {
+			err := ch.Hangup()
+			if err != nil {
+				logrus.Error("fail to hangup: ", err)
+			}
+		}
+	}
+	bridge := c.getBridge(user.ConferenceID)
 	if bridge == nil {
 		return nil, fmt.Errorf("bridge %s does not exist", bridgeID)
 	}

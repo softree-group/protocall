@@ -13,6 +13,7 @@ type User struct {
 	Channel         *ari.Key `json:"-"`
 	ConferenceID    string   `json:"conference_id"`
 	RecordPath      string
+	NeedProtocol    bool `json:"need_protocol"`
 }
 
 func (u *User) Less(then btree.Item) bool {
