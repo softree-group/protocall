@@ -25,4 +25,8 @@ const (
 	TranslatorHost    = "translator.host"
 	TranslatorPort    = "translator.port"
 	TranslatorTimeout = "translator.timeout"
+
+	CentrifugoToken  = "centrifugo.token"
+	CentrifugoAPIKey = "centrifugo.api_key"
+	CentrifugoHost   = "centrifugo.host"
 )

@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/golang-jwt/jwt"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"protocall/application"
 	"protocall/domain/entity"
@@ -31,6 +33,18 @@ func createCookie() *fasthttp.Cookie {
 	authCookie.SetSameSite(fasthttp.CookieSameSiteLaxMode)
 	authCookie.SetSecure(false)
 	return &authCookie
+}
+
+func createCentToken(id string) string {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": id,
+	})
+
+	tokenString, err := token.SignedString([]byte(viper.GetString(config.CentrifugoToken)))
+	if err != nil {
+		logrus.Error("fail to generate cent token: ", err)
+	}
+	return tokenString
 }
 
 func session(ctx *fasthttp.RequestCtx, apps *application.Applications) {
@@ -67,6 +81,7 @@ func session(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	data, _ := json.Marshal(map[string]interface{}{
 		"conference": conference,
 		"account":    account,
+		"cent_token": createCentToken(user.SessionID),
 	})
 
 	ctx.Response.SetBody(data)
