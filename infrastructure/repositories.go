@@ -14,7 +14,6 @@ type Repositories struct {
 	*memory.ConferenceMemory
 	*Uploader
 	*Translator
-	*Sender
 }
 
 func New() *Repositories {
@@ -30,9 +29,8 @@ func New() *Repositories {
 		}),
 		NewTranslator(&TranslatorConfig{
 			Host:    viper.GetString(config.TranslatorHost),
-			Port:    viper.GetString(config.UploaderPort),
-			Timeout: viper.GetInt(config.UploaderTimeout),
+			Port:    viper.GetString(config.TranslatorPort),
+			Timeout: viper.GetInt(config.TranslatorTimeout),
 		}),
-		NewSender(),
 	}
 }

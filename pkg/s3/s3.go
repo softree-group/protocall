@@ -4,34 +4,46 @@ import (
 	"context"
 	"io"
 
-	"github.com/minio/minio-go"
+	"github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
+)
+
+const (
+	unkownSize = -1
 )
 
 type StorageConfig struct {
-	DisableSSL bool   `yaml:"disableSSL"`
-	Bucket     string `yaml:"bucket"`
-	Endpoint   string `yaml:"endpoint"`
-	AccessKey  string
-	SecretKey  string
+	UseSSL    bool   `yaml:"useSSL"`
+	Bucket    string `yaml:"bucket"`
+	Endpoint  string `yaml:"endpoint"`
+	AccessKey string
+	SecretKey string
 }
 
 type S3 struct {
 	client *minio.Client
+	bucket string
 }
 
 func NewStorage(c *StorageConfig) (*S3, error) {
-	mc, err := minio.New(c.Endpoint, c.AccessKey, c.SecretKey, !c.DisableSSL)
+	mc, err := minio.New(c.Endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(c.AccessKey, c.SecretKey, ""),
+		Secure: c.UseSSL,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &S3{client: mc}, nil
+	return &S3{
+		client: mc,
+		bucket: c.Bucket,
+	}, nil
 }
 
-func (c *S3) UploadFile(ctx context.Context, bucketName, localPath, remotePath string) error {
-	if _, err := c.client.FPutObjectWithContext(
+func (s *S3) PutFile(ctx context.Context, localPath, remotePath string) error {
+	if _, err := s.client.FPutObject(
 		ctx,
-		bucketName,
+		s.bucket,
 		remotePath,
 		localPath,
 		minio.PutObjectOptions{},
@@ -42,6 +54,55 @@ func (c *S3) UploadFile(ctx context.Context, bucketName, localPath, remotePath s
 	return nil
 }
 
-func (c *S3) GetFile(ctx context.Context, bucketName, remotePath string) (io.ReadCloser, error) {
-	return c.client.GetObjectWithContext(ctx, bucketName, remotePath, minio.GetObjectOptions{})
+func (s *S3) PutObject(ctx context.Context, objectName string, input io.Reader) error {
+	if _, err := s.client.PutObject(
+		ctx,
+		s.bucket,
+		objectName,
+		input,
+		unkownSize,
+		minio.PutObjectOptions{},
+	); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *S3) GetObject(ctx context.Context, path string) (io.ReadCloser, error) {
+	return s.client.GetObject(ctx, s.bucket, path, minio.GetObjectOptions{})
+}
+
+func (s *S3) GetFile(ctx context.Context, path string) ([]byte, error) {
+	file, err := s.client.GetObject(ctx, s.bucket, path, minio.GetObjectOptions{})
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+type ObjectInfo minio.ObjectInfo
+
+func (s *S3) ListObjects(ctx context.Context, path string) <-chan ObjectInfo {
+	res := make(chan ObjectInfo)
+	go func() {
+		defer close(res)
+		for el := range s.client.ListObjects(
+			ctx,
+			s.bucket,
+			minio.ListObjectsOptions{
+				Prefix:    path,
+				Recursive: true,
+			},
+		) {
+			res <- ObjectInfo(el)
+		}
+	}()
+
+	return res
 }

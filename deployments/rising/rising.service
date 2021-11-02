@@ -1,0 +1,26 @@
+[Unit]
+Description=Protocall service to upload files from disk to s3
+After=netowork.target
+
+[Install]
+WantedBy=multi-user.target
+Alias=rising.service
+
+[Service]
+Type=simple
+
+User=rising
+Group=rising
+
+ProtectSystem=full
+ProtectHome=true
+
+EnvironmentFile=/run/rising/.env
+
+ExecStart=/usr/sbin/rising -f /etc/rising/rising.yaml
+
+KillSignal=SIGTERM
+SendSIGKILL=no
+
+Restart=on-abort
+RestartSec=5s

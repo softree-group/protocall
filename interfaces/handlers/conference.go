@@ -167,6 +167,10 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 			ctx.SetStatusCode(http.StatusInternalServerError)
 			return
 		}
+		if err := apps.Conference.TranslateRecord(user, conference); err != nil {
+			ctx.SetStatusCode(http.StatusInternalServerError)
+			return
+		}
 	}
 
 	// TODO: send socket event about leave participant

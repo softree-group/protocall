@@ -97,8 +97,6 @@ func postSnoop(id, snoopID, appArgs, app, spy, whisper string) (*fasthttp.Respon
 func (c *Conference) StartRecordUser(user *entity.User, conferenceID string) error {
 	user.RecordPath = fmt.Sprintf("%v/%v/%v.wav", conferenceID, user.Username, time.Now().UTC().Unix())
 
-	fmt.Println("HHHHHHH", user.RecordPath)
-
 	resp, err := postSnoop(
 		user.Channel.ID,
 		fmt.Sprintf("%s_%v_%s", conferenceID, time.Now().UTC().Unix(), user.Username),
@@ -158,18 +156,20 @@ func (c *Conference) Delete(meetID string) {
 	}
 }
 
-func (c *Conference) TranslateRecord(string) (*entity.Message, error) {
-	return nil, nil
-}
-
-func (c *Conference) UploadRecord(user *entity.User, meetID string) error {
-	if err := c.reps.Upload(user.RecordPath, user.RecordPath); err != nil {
+func (c *Conference) TranslateRecord(user *entity.User, conference *entity.Conference) error {
+	if err := c.reps.TranslateConference(user, conference); err != nil {
 		logrus.Error(err)
 		return err
 	}
 	return nil
 }
 
-func (c *Conference) SendConference() {}
+func (c *Conference) UploadRecord(user *entity.User, meetID string) error {
+	if err := c.reps.UploadConference(user.RecordPath); err != nil {
+		logrus.Error(err)
+		return err
+	}
+	return nil
+}
 
 var _ applications.Conference = &Conference{}

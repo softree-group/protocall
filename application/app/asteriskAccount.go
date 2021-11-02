@@ -2,7 +2,7 @@ package app
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"os"
 	"protocall/application/applications"
 	"protocall/domain/entity"
@@ -22,7 +22,7 @@ func (a *AsteriskAccount) parse(accountsFile string) {
 	}
 	defer jsonFile.Close()
 
-	bytes, _ := ioutil.ReadAll(jsonFile)
+	bytes, _ := io.ReadAll(jsonFile)
 
 	var accounts entity.AsteriskAccounts
 
