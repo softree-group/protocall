@@ -7,17 +7,14 @@ require (
 	github.com/emersion/go-sasl v0.0.0-20211008083017-0b9dcfb154ac
 	github.com/emersion/go-smtp v0.15.0
 	github.com/fasthttp/router v1.4.3
-	github.com/go-ini/ini v1.63.2 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/btree v1.0.0
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/go-uuid v1.0.1
-	github.com/klauspost/compress v1.13.5 // indirect
 	github.com/lab259/cors v0.2.0
 	github.com/mark-by/logutils v0.3.0
-	github.com/minio/minio-go v6.0.14+incompatible
-	github.com/minio/minio-go/v7 v7.0.15 // indirect
+	github.com/minio/minio-go/v7 v7.0.15
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.9.0
 	github.com/valyala/fasthttp v1.30.0

@@ -12,3 +12,4 @@ connector.yaml
 clerk.yaml
 rising.yaml
 /protocall-front
+centrifugo.json

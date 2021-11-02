@@ -49,5 +49,12 @@ services:
       - 127.0.0.1:2700:2700
     depends_on:
       - connector
+  centrifugo:
+    image: centrifugo/centrifugo
+    command: ["centrifugo", "-c", "centrifugo.json"]
+    networks:
+      - protocall
+    volumes:
+      - ${PWD}/centrifugo.json:/centrifugo.json
 networks:
   protocall:
