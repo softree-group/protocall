@@ -8,6 +8,7 @@ require (
 	github.com/emersion/go-smtp v0.15.0
 	github.com/fasthttp/router v1.4.3
 	github.com/go-ini/ini v1.63.2 // indirect
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/btree v1.0.0
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2

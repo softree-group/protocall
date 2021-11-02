@@ -38,6 +38,7 @@ func ServeAPI(apps *application.Applications) {
 	compose(r.POST, "/conference/record", record)
 	compose(r.POST, "/conference/leave", leave)
 	compose(r.POST, "/conference/ready", ready)
+	compose(r.GET, "/conference", info)
 
 	startServer(r)
 }
