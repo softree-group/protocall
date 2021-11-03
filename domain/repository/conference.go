@@ -7,3 +7,12 @@ type Conference interface {
 	SaveConference(conference *entity.Conference)
 	DeleteConference(conferenceID string)
 }
+
+type ConferenceStorage interface {
+	UploadConference(path string) error
+}
+
+type ConferenceTranslator interface {
+	TranslateConference(user *entity.User, conference *entity.Conference) error
+	CreateProtocol(conferenceID string, sendTo []string) error
+}

@@ -2,11 +2,12 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/spf13/viper"
 	"net/http"
 	"protocall/application"
 	"protocall/domain/entity"
 	"protocall/internal/config"
+
+	"github.com/spf13/viper"
 
 	"github.com/google/btree"
 
@@ -214,6 +215,26 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	defer ctx.Response.Header.DelCookie(sessionCookie)
 
 	conference := apps.Conference.Get(user.ConferenceID)
+
+	if conference.IsRecording {
+		if err := apps.Conference.UploadRecord(user, user.ConferenceID); err != nil {
+			ctx.SetStatusCode(http.StatusInternalServerError)
+			return
+		}
+
+		if err := apps.Conference.TranslateRecord(user, conference); err != nil {
+			ctx.SetStatusCode(http.StatusInternalServerError)
+			return
+		}
+
+		if conference.HostUserID == user.AsteriskAccount {
+			if err := apps.Conference.CreateProtocol(conference); err != nil {
+				ctx.SetStatusCode(http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+
 	conference.Participants.Delete(user)
 
 	if conference.HostUserID == user.AsteriskAccount {
@@ -235,13 +256,6 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		})
 
 		apps.Conference.Delete(user.ConferenceID)
-	}
-
-	if conference.IsRecording {
-		if err := apps.Conference.UploadRecord(user, user.ConferenceID); err != nil {
-			ctx.SetStatusCode(http.StatusInternalServerError)
-			return
-		}
 	}
 
 	// TODO: send socket event about leave participant

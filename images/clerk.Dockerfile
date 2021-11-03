@@ -6,12 +6,12 @@ ADD . .
 
 RUN GO111MODULE=on \
   CGO_ENABLED=0 \
-  go build -o translator ./cmd/translator
+  go build -o clerk ./cmd/clerk
 
 FROM alpine:3.14
 
 WORKDIR /app
 
-COPY --from=build /build/translator .
+COPY --from=build /build/clerk .
 
-ENTRYPOINT ["/app/translator"]
+ENTRYPOINT ["/app/clerk"]

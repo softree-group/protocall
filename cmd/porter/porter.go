@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -51,7 +51,7 @@ func (s *Server) upload(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	if err := s.storage.UploadFile(context.Background(), s.bucket, filepath.Join(s.root, from), filepath.Join(to)); err != nil {
+	if err := s.storage.PutFile(context.Background(), filepath.Join(s.root, from), filepath.Join(to)); err != nil {
 		fmt.Println(err)
 		ctx.Response.SetStatusCode(http.StatusInternalServerError)
 		return
@@ -60,40 +60,39 @@ func (s *Server) upload(ctx *fasthttp.RequestCtx) {
 	ctx.Response.SetStatusCode(http.StatusNoContent)
 }
 
-func main() {
-	configPath := ""
-	flag.StringVar(&configPath, "f", "", "путь до файла конфигурации")
+var (
+	configPath = flag.String("f", "", "path to configuration file")
+)
 
+func main() {
 	flag.Parse()
-	if configPath == "" {
+	if *configPath == "" {
 		fmt.Println("need to specify path to config")
 		flag.Usage()
 		os.Exit(1)
 	}
-	data, err := ioutil.ReadFile(configPath)
+
+	data, err := os.ReadFile(*configPath)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatalf("cannot read configuration: %v", err)
 	}
 
 	config := &struct {
-		SrvConf ServerConfig     `yaml:"uploader"`
+		SrvConf ServerConfig     `yaml:"porter"`
 		S3Conf  s3.StorageConfig `yaml:"s3"`
 	}{
 		SrvConf: ServerConfig{},
 		S3Conf:  s3.StorageConfig{},
 	}
 	if err = yaml.Unmarshal(data, config); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatalf("cannot parse configuration: %v", err)
 	}
 	config.S3Conf.AccessKey = os.Getenv("ACCESS_KEY")
 	config.S3Conf.SecretKey = os.Getenv("SECRET_KEY")
 
 	storage, err := s3.NewStorage(&config.S3Conf)
 	if err != nil {
-		fmt.Println("cannot connect to s3", err)
-		os.Exit(1)
+		log.Fatalf("cannot connect to s3: %v", err)
 	}
 
 	srv := NewServer(storage, config.SrvConf.Root, config.S3Conf.Bucket)
@@ -102,6 +101,6 @@ func main() {
 	r.POST("/upload", srv.upload)
 
 	if err = fasthttp.ListenAndServe(fmt.Sprintf("%v:%v", config.SrvConf.Host, config.SrvConf.Port), r.Handler); err != nil {
-		fmt.Println(err)
+		log.Fatalf("server error: %v", err)
 	}
 }

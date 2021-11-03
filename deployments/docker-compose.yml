@@ -3,18 +3,27 @@ services:
   connector:
     build:
       context: ../
-      dockerfile: images/connector.dockerfile
+      dockerfile: images/connector.Dockerfile
     image: connector
     volumes:
       - ${PWD}/accounts.json:/app/accounts.json
       - ${PWD}/connector.yaml:/app/config.yaml
     networks:
       - protocall
-  translator:
+  clerk:
     build:
       context: ../
-      dockerfile: images/translator.dockerfile
-    image: translator
+      dockerfile: images/clerk.Dockerfile
+    image: clerk
+    environment:
+      - ACCESS_KEY
+      - SECRET_KEY
+      - EMAIL_KEY
+    volumes:
+      - ${PWD}/clerk.yaml:/app/clerk.yaml
+    command: ["-f", "/app/clerk.yaml"]
+    ports:
+      - 127.0.0.1:7777:5656
     networks:
       - protocall
   frontend:
@@ -28,6 +37,24 @@ services:
       - protocall
     depends_on:
       - connector
-
+  recognizer:
+    # build:
+    #   context: ../
+    #   dockerfile: images/recognizer.dockerfile
+    # image: recognizer
+    image: alphacep/kaldi-ru:latest
+    networks:
+      - protocall
+    ports:
+      - 127.0.0.1:2700:2700
+    depends_on:
+      - connector
+  centrifugo:
+    image: centrifugo/centrifugo
+    command: ["centrifugo", "-c", "centrifugo.json"]
+    networks:
+      - protocall
+    volumes:
+      - ${PWD}/centrifugo.json:/centrifugo.json
 networks:
   protocall:
