@@ -2,7 +2,11 @@ package s3
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"net/url"
+	"strings"
+	"time"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -10,6 +14,7 @@ import (
 
 const (
 	unkownSize = -1
+	expire     = time.Second * 24 * 60 * 60
 )
 
 type StorageConfig struct {
@@ -86,23 +91,31 @@ func (s *S3) GetFile(ctx context.Context, path string) ([]byte, error) {
 	return data, nil
 }
 
-type ObjectInfo minio.ObjectInfo
+type ObjectInfo = minio.ObjectInfo
 
 func (s *S3) ListObjects(ctx context.Context, path string) <-chan ObjectInfo {
-	res := make(chan ObjectInfo)
-	go func() {
-		defer close(res)
-		for el := range s.client.ListObjects(
-			ctx,
-			s.bucket,
-			minio.ListObjectsOptions{
-				Prefix:    path,
-				Recursive: true,
-			},
-		) {
-			res <- ObjectInfo(el)
-		}
-	}()
+	return s.client.ListObjects(
+		ctx,
+		s.bucket,
+		minio.ListObjectsOptions{
+			Prefix:    path,
+			Recursive: true,
+		},
+	)
+}
 
-	return res
+func (s *S3) GetLink(ctx context.Context, path string) (*url.URL, error) {
+	reqParams := make(url.Values)
+	reqParams.Set(
+		"response-content-disposition",
+		fmt.Sprintf("attachment; filename=%v", path[strings.LastIndex(path, "/")+1:]),
+	)
+
+	return s.client.PresignedGetObject(
+		ctx,
+		s.bucket,
+		path,
+		expire,
+		reqParams,
+	)
 }

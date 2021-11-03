@@ -4,20 +4,20 @@ After=netowork.target
 
 [Install]
 WantedBy=multi-user.target
-Alias=rising.service
+Alias=porter.service
 
 [Service]
 Type=simple
 
-User=rising
-Group=rising
+User=porter
+Group=porter
 
 ProtectSystem=full
 ProtectHome=true
 
-EnvironmentFile=/run/rising/.env
+EnvironmentFile=/run/porter/.env
 
-ExecStart=/usr/sbin/rising -f /etc/rising/rising.yaml
+ExecStart=/usr/sbin/porter -f /etc/porter/porter.yaml
 
 KillSignal=SIGTERM
 SendSIGKILL=no

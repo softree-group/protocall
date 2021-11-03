@@ -2,24 +2,24 @@ package interfaces
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
 	"protocall/api"
-	"protocall/cmd/clerk/application"
 	"protocall/cmd/clerk/domain"
 	"protocall/pkg/logger"
 )
 
 type Application struct {
 	domain.Sender
-	domain.Gluer
+	domain.Stapler
 	domain.Translator
 }
 
 func NewApplication(
 	sender domain.Sender,
-	gluer domain.Gluer,
+	gluer domain.Stapler,
 	translator domain.Translator,
 ) *Application {
 	return &Application{
@@ -29,7 +29,7 @@ func NewApplication(
 	}
 }
 
-func (a *Application) ProcessRecord(res http.ResponseWriter, req *http.Request) {
+func (a *Application) translate(res http.ResponseWriter, req *http.Request) {
 	body, err := io.ReadAll(req.Body)
 	defer req.Body.Close()
 	if err != nil {
@@ -37,42 +37,19 @@ func (a *Application) ProcessRecord(res http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	translate := api.TranslateRequest{}
-	if err := json.Unmarshal(body, &translate); err != nil {
+	translateRequest := api.TranslateRequest{}
+	if err := json.Unmarshal(body, &translateRequest); err != nil {
 		logger.L.Error(err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	jobID, err := a.CreateJob(&translate)
-	if err != nil {
-		logger.L.Error(err)
-		return
-	}
+	a.TranslateRecord(&translateRequest)
 
-	res.Write([]byte(jobID))
-	res.WriteHeader(http.StatusOK)
+	res.WriteHeader(http.StatusNoContent)
 }
 
-func (a *Application) GetJobStatus(res http.ResponseWriter, req *http.Request) {
-	status, err := a.GetStatus(req.URL.Query().Get("id"))
-	if err != nil {
-		logger.L.Error(err)
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	switch status {
-	case application.Running:
-		res.Write([]byte("RUNNING"))
-	case application.Ready:
-		res.Write([]byte("READY"))
-	case application.Failed:
-		res.Write([]byte("FAILED"))
-	}
-	res.WriteHeader(http.StatusOK)
-}
-
-func (a *Application) MakeProtocol(res http.ResponseWriter, req *http.Request) {
+func (a *Application) create(res http.ResponseWriter, req *http.Request) {
 	body, err := io.ReadAll(req.Body)
 	defer req.Body.Close()
 	if err != nil {
@@ -81,24 +58,16 @@ func (a *Application) MakeProtocol(res http.ResponseWriter, req *http.Request) {
 	}
 
 	sendRequest := api.SendProtocolRequest{}
+
 	if err := json.Unmarshal(body, &sendRequest); err != nil {
 		logger.L.Error(err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	protocall, err := a.Merge(req.Context(), sendRequest.ConferenceID)
-	if err != nil {
-		logger.L.Error(err)
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	fmt.Println("DEBUG", sendRequest)
 
-	if err := a.SendProtocol(req.Context(), protocall, sendRequest.To); err != nil {
-		logger.L.Error(err)
-		res.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	a.NewProtocol(&sendRequest, a.SendSMTP)
 
 	res.WriteHeader(http.StatusNoContent)
 }

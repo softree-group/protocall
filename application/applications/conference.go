@@ -11,6 +11,7 @@ type Conference interface {
 	StartRecord(user *entity.User, meetID string) error
 	UploadRecord(user *entity.User, meetID string) error
 	TranslateRecord(user *entity.User, conference *entity.Conference) error
+	CreateProtocol(conference *entity.Conference) error
 	Get(meetID string) *entity.Conference
 	StartRecordUser(user *entity.User, meetID string) error
 	Delete(meetID string)

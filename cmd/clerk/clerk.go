@@ -42,7 +42,7 @@ func main() {
 					Username: config.Sender.Username,
 					Password: os.Getenv("EMAIL_KEY"),
 				}),
-				application.NewGluer(storage),
+				application.NewStapler(storage),
 				application.NewTranslator(rec, storage),
 			),
 		),

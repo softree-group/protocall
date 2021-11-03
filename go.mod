@@ -4,8 +4,6 @@ go 1.16
 
 require (
 	github.com/CyCoreSystems/ari/v5 v5.2.0
-	github.com/emersion/go-sasl v0.0.0-20211008083017-0b9dcfb154ac
-	github.com/emersion/go-smtp v0.15.0
 	github.com/fasthttp/router v1.4.3
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/btree v1.0.0
@@ -21,5 +19,7 @@ require (
 	golang.org/x/net v0.0.0-20211020060615-d418f374d309 // indirect
 	golang.org/x/sys v0.0.0-20211025201205-69cdffdb9359 // indirect
 	golang.org/x/text v0.3.7 // indirect
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/yaml.v2 v2.4.0
 )

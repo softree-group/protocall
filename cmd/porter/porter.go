@@ -78,7 +78,7 @@ func main() {
 	}
 
 	config := &struct {
-		SrvConf ServerConfig     `yaml:"rising"`
+		SrvConf ServerConfig     `yaml:"porter"`
 		S3Conf  s3.StorageConfig `yaml:"s3"`
 	}{
 		SrvConf: ServerConfig{},

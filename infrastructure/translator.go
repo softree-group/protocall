@@ -65,3 +65,30 @@ func (t *Translator) TranslateConference(u *entity.User, c *entity.Conference) e
 
 	return nil
 }
+
+func (t *Translator) CreateProtocol(conferenceID string, sendTo []string) error {
+	fmt.Println("EMAILS", sendTo)
+	body, err := json.Marshal(api.SendProtocolRequest{
+		ConferenceID: conferenceID,
+		To:           sendTo,
+	})
+	if err != nil {
+		return err
+	}
+
+	resp, err := t.c.Post(
+		fmt.Sprintf("%v/protocols", t.addr),
+		"application/json",
+		bytes.NewReader(body),
+	)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		return errTranslate
+	}
+
+	return nil
+}

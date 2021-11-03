@@ -6,20 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 
 	"protocall/api"
 	"protocall/cmd/clerk/domain"
 	"protocall/pkg/logger"
-
-	"github.com/hashicorp/go-uuid"
-)
-
-const (
-	Running = iota
-	Ready
-	Failed
 )
 
 var (
@@ -29,33 +20,23 @@ var (
 type Translator struct {
 	storage    domain.RecordStorage
 	recognizer domain.Recognizer
-
-	jobStatus *sync.Map
 }
 
 func NewTranslator(r domain.Recognizer, s domain.RecordStorage) *Translator {
 	return &Translator{
 		storage:    s,
 		recognizer: r,
-		jobStatus:  new(sync.Map),
 	}
 }
 
-func (t *Translator) GetStatus(jobID string) (int, error) {
-	status, ok := t.jobStatus.Load(jobID)
-	if !ok {
-		return -1, fmt.Errorf("%v", "job not found")
-	}
-	return status.(int), nil
-}
-
-func phrase(conferenceStart *time.Time, resp *api.TextRespone) string {
+func phrase(req *api.TranslateRequest, resp *api.TextRespone) string {
 	if resp.Text == "" {
 		return ""
 	}
 	return fmt.Sprintf(
-		"%v:%v\n",
-		conferenceStart.Add(time.Duration(resp.Result[0].Start*float64(time.Second))),
+		"%v:%v:%v\n",
+		req.StartTime.Add(time.Duration(resp.Result[0].Start*float64(time.Second))),
+		req.User.Username,
 		resp.Text,
 	)
 }
@@ -69,7 +50,7 @@ func (t *Translator) processAudio(ctx context.Context, req *api.TranslateRequest
 
 	w := bytes.NewBuffer([]byte{})
 	for text := range t.recognizer.Recognize(ctx, audio) {
-		fmt.Fprint(w, phrase(&req.StartTime, &text))
+		fmt.Fprint(w, phrase(req, &text))
 	}
 
 	if err := t.storage.PutObject(
@@ -83,21 +64,12 @@ func (t *Translator) processAudio(ctx context.Context, req *api.TranslateRequest
 	return nil
 }
 
-func (t *Translator) CreateJob(req *api.TranslateRequest) (string, error) {
-	jobID, err := uuid.GenerateUUID()
-	if err != nil {
-		return "", err
-	}
-	t.jobStatus.Store(jobID, Running)
-
+func (t *Translator) TranslateRecord(req *api.TranslateRequest) {
 	go func() {
 		if err := t.processAudio(context.Background(), req); err != nil {
-			t.jobStatus.Store(jobID, Failed)
+			logger.L.Error("error while process record: ", req.User.Path)
 			return
 		}
-		t.jobStatus.Store(jobID, Ready)
 		logger.L.Info("Translation done ", req.User.Path)
 	}()
-
-	return jobID, nil
 }

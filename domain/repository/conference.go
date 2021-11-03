@@ -14,4 +14,5 @@ type ConferenceStorage interface {
 
 type ConferenceTranslator interface {
 	TranslateConference(user *entity.User, conference *entity.Conference) error
+	CreateProtocol(conferenceID string, sendTo []string) error
 }

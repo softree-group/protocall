@@ -3,25 +3,29 @@ package domain
 import (
 	"context"
 	"io"
+	"net/url"
 
 	"protocall/api"
 	"protocall/pkg/s3"
 )
 
-type Gluer interface {
-	Merge(context.Context, string) (string, error)
+type Stapler interface {
+	NewProtocol(
+		*api.SendProtocolRequest,
+		...func(context.Context, string, []string),
+	)
 }
 
 type Sender interface {
-	SendProtocol(context.Context, string, []string) error
+	SendSMTP(context.Context, string, []string)
 }
 
 type Translator interface {
-	GetStatus(string) (int, error)
-	CreateJob(*api.TranslateRequest) (string, error)
+	TranslateRecord(*api.TranslateRequest)
 }
 
 type RecordStorage interface {
+	GetLink(ctx context.Context, path string) (*url.URL, error)
 	PutFile(context.Context, string, string) error
 	PutObject(context.Context, string, io.Reader) error
 	GetObject(context.Context, string) (io.ReadCloser, error)

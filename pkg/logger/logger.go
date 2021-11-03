@@ -11,6 +11,8 @@ type LoggerConfig struct {
 	LogLevel   string `yaml:"logLevel"`
 }
 
+var L *logrus.Logger
+
 func NewLogger(c *LoggerConfig) error {
 	L = logrus.New()
 
@@ -30,5 +32,3 @@ func NewLogger(c *LoggerConfig) error {
 	L.SetLevel(level)
 	return nil
 }
-
-var L *logrus.Logger
