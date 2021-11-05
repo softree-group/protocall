@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: centrifugo-pod
+  namespace: protocall
+spec:
+  selector:
+    matchLabels:
+      app: centrifugo
+  template:
+    metadata:
+      labels:
+        app: centrifugo
+    spec:
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      terminationGracePeriodSeconds: 60
+      containers:
+      - name: centrifugo
+        image: centrifugo/centrifugo
+        command: ["centrifugo", "-c", "/etc/centrifugo/centrifugo.json"]
+        ports:
+        - name: centrifugo
+          containerPort: 9000
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/centrifugo
+      volumes:
+      - name: config-volume
+        configMap:
+          name: centrifugo-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: centrifugo-service
+  namespace: protocall
+spec:
+  type: ClusterIP
+  selector:
+    app: centrifugo
+  ports:
+  - name: centrifugo
+    port: 9000
+    targetPort: centrifugo

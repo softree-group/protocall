@@ -13,3 +13,5 @@ clerk.yaml
 rising.yaml
 /protocall-front
 centrifugo.json
+**/*-config.yml
+**/*-secret.yml

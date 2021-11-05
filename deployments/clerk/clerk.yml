@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clerk-pod
+  namespace: protocall
+spec:
+  selector:
+    matchLabels:
+      app: clerk
+  template:
+    metadata:
+      labels:
+        app: clerk
+    spec:
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      terminationGracePeriodSeconds: 60
+      containers:
+      - name: clerk
+        image: clerk
+        command: ["-f", "/etc/clerk/clerk.yaml"]
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/clerk
+        ports:
+        - name: clerk
+          containerPort: 9000
+        env:
+        - name: ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: clerk-secret
+              key: ACCESS_KEY
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: clerk-secret
+              key: SECRET_KEY
+        - name: EMAIL_KEY
+          valueFrom:
+            secretKeyRef:
+              name: clerk-secret
+              key: EMAIL_KEY
+      volumes:
+      - name: config-volume
+        configMap:
+          name: clerk-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clerk-service
+  namespace: protocall
+spec:
+  type: ClusterIP
+  selector:
+    app: clerk
+  ports:
+  - name: clerk
+    port: 80
+    targetPort: clerk
