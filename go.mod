@@ -9,6 +9,7 @@ require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/btree v1.0.0
 	github.com/hashicorp/go-uuid v1.0.1
+	github.com/heltonmarx/goami v1.0.1-0.20211007112051-e5aeb6b4a015 // indirect
 	github.com/klauspost/compress v1.13.5 // indirect
 	github.com/lab259/cors v0.2.0
 	github.com/mark-by/logutils v0.3.0

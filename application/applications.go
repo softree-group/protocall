@@ -1,6 +1,7 @@
 package application
 
 import (
+	"context"
 	"protocall/application/app"
 	"protocall/application/applications"
 	"protocall/domain/repository"
@@ -18,6 +19,7 @@ type Applications struct {
 	AsteriskAccount applications.AsteriskAccount
 	Conference      applications.Conference
 	Connector       applications.Connector
+	AMI 			*app.AMIAsterisk
 }
 
 func New(reps repository.Repositories) *Applications {
@@ -36,12 +38,21 @@ func New(reps repository.Repositories) *Applications {
 
 	connector := app.NewConnector(ariClient, reps)
 
+	userApp := app.NewUser(reps)
+	conferenceApp := app.NewConference(reps, ariClient)
+	asteriskApp := app.NewAsteriskAccount(reps, viper.GetString(config.ARIAccountsFile))
+	ami, err := app.NewAMIAsterisk(context.Background(), viper.GetString(config.AMIHost) + ":" + viper.GetString(config.AMIPort), viper.GetString(config.AMIUser), viper.GetString(config.AMIPassword))
+	if err != nil {
+		logrus.Fatal("Fail connect to ami: ", err)
+	}
+
 	return &Applications{
-		Listener:        app.NewListener(reps, ariClient, app.NewHandler(ariClient, reps, connector)),
+		Listener:        app.NewListener(reps, ariClient, app.NewHandler(ariClient, reps, connector), userApp, conferenceApp, asteriskApp),
 		Snoopy:          app.NewSnoopy(),
-		Conference:      app.NewConference(reps, ariClient),
-		AsteriskAccount: app.NewAsteriskAccount(reps, viper.GetString(config.ARIAccountsFile)),
-		User:            app.NewUser(reps),
+		Conference:      conferenceApp,
+		AsteriskAccount: asteriskApp,
+		User:            userApp,
 		Connector:       connector,
+		AMI: ami,
 	}
 }

@@ -30,9 +30,8 @@ type PublishData struct {
 	} `json:"user"`
 }
 
-func publish(apps *application.Applications, user *entity.User, event string) {
+func publish(user *entity.User, event string) {
 	logrus.Info("publish: ", user.ConferenceID, event)
-	//context := context.Background()
 	publishData := PublishData{
 		Event: event,
 		User: struct {
@@ -53,7 +52,6 @@ func publish(apps *application.Applications, user *entity.User, event string) {
 	if err != nil {
 		logrus.Error("fail to marshal: ", err)
 	}
-	//_, err = apps.Centrifugo.Publish(context, "conference~"+user.ConferenceID, data)
 	req := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(req)
 	req.SetBody(data)
@@ -140,7 +138,7 @@ func join(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		return
 	}
 
-	publish(apps, user, "connection")
+	publish(user, "connection")
 
 	ctx.Response.SetBody(data)
 	ctx.Response.Header.SetContentType("application/json")
@@ -162,6 +160,7 @@ func ready(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		return
 	}
 
+	logrus.Info("Calling ", user.AsteriskAccount)
 	channel, err := apps.Connector.CallAndConnect(user)
 	if err != nil {
 		ctx.Error(err.Error(), http.StatusBadRequest)
@@ -170,10 +169,10 @@ func ready(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 
 	defer func() {
 		if err != nil {
-			publish(apps, user, "fail_connection")
+			publish(user, "fail_connection")
 			return
 		}
-		publish(apps, user, "connected")
+		publish(user, "connected")
 	}()
 
 	user.Channel = channel
@@ -201,11 +200,13 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		return
 	}
 
-	publish(apps, user, "leave")
+	publish(user, "leave")
 
-	err := apps.Connector.Disconnect(user.ConferenceID, user.Channel)
-	if err != nil {
-		logrus.Error("Fail to disconnect: ", err)
+	if user.Channel != nil {
+		err := apps.Connector.Disconnect(user.ConferenceID, user.Channel)
+		if err != nil {
+			logrus.Error("Fail to disconnect: ", err)
+		}
 	}
 
 	apps.AsteriskAccount.Free(user.AsteriskAccount)
@@ -225,12 +226,13 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 			if participant == nil {
 				return false
 			}
+			logrus.Info("Disconnect: ", participant.Username)
 			if err := apps.Connector.Disconnect(participant.ConferenceID, participant.Channel); err != nil {
 				logrus.Error("Fail to disconnect: ", err)
 			}
 			apps.AsteriskAccount.Free(user.AsteriskAccount)
 			apps.User.Delete(user.SessionID)
-			publish(apps, user, "end")
+			publish(user, "end")
 			return true
 		})
 
@@ -244,7 +246,6 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		}
 	}
 
-	// TODO: send socket event about leave participant
 }
 
 func record(ctx *fasthttp.RequestCtx, apps *application.Applications) {
@@ -261,7 +262,7 @@ func record(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		return
 	}
 
-	publish(apps, user, "start_record")
+	publish(user, "start_record")
 }
 
 type UserInfo struct {

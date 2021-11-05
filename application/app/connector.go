@@ -68,7 +68,7 @@ func (c *Connector) CreateBridge(id string) (*ari.BridgeHandle, error) {
 		XXX_sizecache:        0,
 	}
 
-	return c.ari.Bridge().Create(key, "mixing", key.ID)
+	return c.ari.Bridge().Create(key, "video_sfu", key.ID)
 }
 
 func (c *Connector) CallAndConnect(user *entity.User) (*ari.Key, error) {
