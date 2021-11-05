@@ -31,20 +31,27 @@ all: clerk connector
 
 clerk:
 	docker build \
-		-f images/clerk.Dockerfile \
+		-f images/Dockerfile \
 		-t clerk:$(VERSION) \
 		--build-arg IMAGE=clerk \
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
 		.
 
+push-clerk:
+	docker push clerk:latest
+
 connector:
 	docker build \
-		-f images/connector.Dockerfile \
+		-f images/Dockerfile \
 		-t connector:$(VERSION) \
 		--build-arg IMAGE=connector \
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+		.
+
+push-connector:
+	docker push connector:latest
 
 docker-down:
 	docker rm -f $(shell docker ps -aq)
@@ -61,7 +68,7 @@ kind-up:
 	kind create cluster \
 		--image kindest/node:v1.21.1@sha256:69860bda5563ac81e3c0057d654b5253219618a22ec3a346306239bba8cfa1a6 \
 		--name $(KIND_CLUSTER) \
-		--config zarf/k8s/kind/kind-config.yaml
+		--config deployments/kind-config.yml
 	kubectl config set-context --current --namespace=dev
 
 kind-down:

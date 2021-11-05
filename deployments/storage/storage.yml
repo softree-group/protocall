@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storage-pod
+  namespace: protocall
+spec:
+  selector:
+    matchLabels:
+      app: storage
+  template:
+    metadata:
+      labels:
+        app: storage
+    spec:
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      terminationGracePeriodSeconds: 60
+      containers:
+      - name: storage
+        image: minio/minio
+        command: ["server", "/data", "--console-address", ":9001"]
+        volumeMounts:
+        - name: storage-volume
+          mountPath: /data
+        ports:
+        - name: storage
+          containerPort: 9000
+        - name: storage-api
+          containerPort: 9001
+      volumes:
+      - name: storage-volume
+        persistentVolumeClaim:
+          claimName: storage-claim
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-service
+  namespace: protocall
+spec:
+  type: ClusterIP
+  selector:
+    app: storage
+  ports:
+  - name: storage
+    port: 80
+    targetPort: storage
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: storage-claim
+  namespace: protocall
+spec:
+  resources:
+    requests:
+      storage: 5Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: recognizer-service
+  namespace: protocall
+spec:
+  type: NodePort
+  selector:
+    app: recognizer
+  ports:
+  - name: recognizer
+    port: 9001
+    nodePort: 30004
+    targetPort: recognizer

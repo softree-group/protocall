@@ -24,7 +24,7 @@ spec:
           mountPath: /etc/clerk
         ports:
         - name: clerk
-          containerPort: 9000
+          containerPort: 80
         env:
         - name: ACCESS_KEY
           valueFrom:
@@ -52,10 +52,11 @@ metadata:
   name: clerk-service
   namespace: protocall
 spec:
-  type: ClusterIP
+  type: NodePort
   selector:
     app: clerk
   ports:
   - name: clerk
     port: 80
+    hostPort: 30002
     targetPort: clerk

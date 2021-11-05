@@ -1,0 +1,38 @@
+name: build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    needs: validate
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get sources
+        uses: actions/checkout@v2
+
+      - name: build connector
+        run: make connector
+
+      - name: build clerk
+        run: make clerk
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@28218f9b04b4f3f62068d7b6ce6ca5b26e35336c
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push connector to registry
+        if: github.event_name != 'pull_request'
+        run: make push-connector
+
+      - name: Push clerk to registry
+        if: github.event_name != 'pull_request'
+        run: make push-clerk

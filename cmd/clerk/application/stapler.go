@@ -33,7 +33,7 @@ func (s *Stapler) collect(ctx context.Context, req *api.SendProtocolRequest) (st
 			res += string(raw)
 		}
 	}
-	
+
 	return res, nil
 }
 
