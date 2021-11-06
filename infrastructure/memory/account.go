@@ -12,15 +12,15 @@ import (
 )
 
 type AsteriskAccountMemory struct {
-	store *btree.BTree
+	store   *btree.BTree
 	userMap map[string]string
-	lock  *sync.RWMutex
+	lock    *sync.RWMutex
 }
 
 func NewAsteriskAccount() *AsteriskAccountMemory {
 	repo := &AsteriskAccountMemory{
-		lock:  &sync.RWMutex{},
-		store: btree.New(viper.GetInt(config.Participant)),
+		lock:    &sync.RWMutex{},
+		store:   btree.New(viper.GetInt(config.Participant)),
 		userMap: map[string]string{},
 	}
 	return repo

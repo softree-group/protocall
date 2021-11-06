@@ -1,75 +1,16 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
-	"github.com/spf13/viper"
+	"github.com/google/btree"
 	"net/http"
 	"protocall/application"
 	"protocall/domain/entity"
-	"protocall/internal/config"
-
-	"github.com/google/btree"
 
 	"github.com/sirupsen/logrus"
 	"github.com/valyala/fasthttp"
 )
-
-type Publish struct {
-	Method string `json:"method"`
-	Params struct {
-		Channel string      `json:"channel"`
-		Data    PublishData `json:"data"`
-	}
-}
-
-type PublishData struct {
-	Event string `json:"event"`
-	User  struct {
-		ID   string `json:"id"`
-		Name string `json:"name"`
-	} `json:"user"`
-}
-
-func publish(user *entity.User, event string) {
-	logrus.Info("publish: ", user.ConferenceID, event)
-	publishData := PublishData{
-		Event: event,
-		User: struct {
-			ID   string `json:"id"`
-			Name string `json:"name"`
-		}{ID: user.AsteriskAccount, Name: user.Username},
-	}
-
-	publishMethod := Publish{
-		Method: "publish",
-		Params: struct {
-			Channel string      `json:"channel"`
-			Data    PublishData `json:"data"`
-		}{Channel: "conference~" + user.ConferenceID, Data: publishData},
-	}
-
-	data, err := json.Marshal(publishMethod)
-	if err != nil {
-		logrus.Error("fail to marshal: ", err)
-	}
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	req.SetBody(data)
-	req.Header.SetContentType("application/json")
-	req.Header.Set("Authorization", "apikey "+viper.GetString(config.CentrifugoAPIKey))
-	req.Header.SetMethod("POST")
-	req.SetRequestURI(viper.GetString(config.CentrifugoHost) + "/api")
-
-	resp := fasthttp.AcquireResponse()
-	defer fasthttp.ReleaseResponse(resp)
-
-	err = fasthttp.Do(req, resp)
-
-	logrus.Info(resp.StatusCode())
-	if err != nil {
-		logrus.Error("fail to publish: ", err)
-	}
-}
 
 func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	user := getUser(ctx, apps)
@@ -88,18 +29,13 @@ func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
-	_, err = apps.Connector.CreateBridge(conference.ID)
-	if err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
-		return
-	}
 
 	conference.BridgeID = conference.ID
 
 	data, err := json.Marshal(map[string]interface{}{
 		"conference": conference,
 		"account":    account,
-		"cent_token": createCentToken(user.SessionID),
+		"cent_token": createCentToken(user.AsteriskAccount),
 	})
 	if err != nil {
 		ctx.Error(err.Error(), http.StatusInternalServerError)
@@ -131,14 +67,14 @@ func join(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	data, err := json.Marshal(map[string]interface{}{
 		"conference": conference,
 		"account":    account,
-		"cent_token": createCentToken(user.SessionID),
+		"cent_token": createCentToken(user.AsteriskAccount),
 	})
 	if err != nil {
 		ctx.Error(err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	publish(user, "connection")
+	_ = apps.Socket.PublishConnectionEvent(user)
 
 	ctx.Response.SetBody(data)
 	ctx.Response.Header.SetContentType("application/json")
@@ -156,41 +92,11 @@ func getUser(ctx *fasthttp.RequestCtx, apps *application.Applications) *entity.U
 func ready(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	user := getUser(ctx, apps)
 	if user == nil {
-		ctx.Error("no session", http.StatusBadRequest)
+		ctx.SetStatusCode(http.StatusBadRequest)
 		return
 	}
 
-	logrus.Info("Calling ", user.AsteriskAccount)
-	channel, err := apps.Connector.CallAndConnect(user)
-	if err != nil {
-		ctx.Error(err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	defer func() {
-		if err != nil {
-			publish(user, "fail_connection")
-			return
-		}
-		publish(user, "connected")
-	}()
-
-	user.Channel = channel
-	apps.User.Save(user)
-
-	conference := apps.Conference.Get(user.ConferenceID)
-	if conference == nil {
-		logrus.Error("fail to get conference ", user.ConferenceID)
-		return
-	}
-
-	if conference.IsRecording {
-		err = apps.Conference.StartRecordUser(user, conference.ID)
-		if err != nil {
-			logrus.Error("fail to start record user: ", err)
-			return
-		}
-	}
+	_ = apps.Socket.PublishConnectedEvent(user)
 }
 
 func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
@@ -200,10 +106,11 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		return
 	}
 
-	publish(user, "leave")
+	_ = apps.Socket.PublishLeaveEvent(user)
 
 	if user.Channel != nil {
-		err := apps.Connector.Disconnect(user.ConferenceID, user.Channel)
+		err := apps.AMI.KickUser(context.Background(), user)
+		//err := apps.Connector.Disconnect(user.ConferenceID, user.Channel)
 		if err != nil {
 			logrus.Error("Fail to disconnect: ", err)
 		}
@@ -217,6 +124,8 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	conference := apps.Conference.Get(user.ConferenceID)
 	conference.Participants.Delete(user)
 
+	apps.Bus.Publish("leave/"+user.SessionID, "")
+
 	if conference.HostUserID == user.AsteriskAccount {
 		conference.Participants.Ascend(func(item btree.Item) bool {
 			if item == nil {
@@ -226,16 +135,17 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 			if participant == nil {
 				return false
 			}
-			logrus.Info("Disconnect: ", participant.Username)
-			if err := apps.Connector.Disconnect(participant.ConferenceID, participant.Channel); err != nil {
-				logrus.Error("Fail to disconnect: ", err)
-			}
-			apps.AsteriskAccount.Free(user.AsteriskAccount)
-			apps.User.Delete(user.SessionID)
-			publish(user, "end")
+			apps.Bus.Publish("leave/"+participant.SessionID, "")
+			apps.AsteriskAccount.Free(participant.AsteriskAccount)
+			apps.User.Delete(participant.SessionID)
 			return true
 		})
 
+		err := apps.AMI.KickAllFromConference(context.Background(), user.ConferenceID)
+		if err != nil {
+			logrus.Error("fail to kick all users: ", err)
+		}
+		_ = apps.Socket.PublishEndConference(user.ConferenceID)
 		apps.Conference.Delete(user.ConferenceID)
 	}
 
@@ -262,12 +172,13 @@ func record(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		return
 	}
 
-	publish(user, "start_record")
+	_ = apps.Socket.PublishStartRecordEvent(user.ConferenceID)
 }
 
 type UserInfo struct {
-	Name string `json:"name"`
-	ID   string `json:"id"`
+	Name    string `json:"name"`
+	ID      string `json:"id"`
+	Channel string `json:"channel"`
 }
 
 type ConferenceInfo struct {
@@ -312,9 +223,14 @@ func info(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		if user == nil {
 			return false
 		}
+		channel := ""
+		if user.Channel != nil {
+			channel = user.Channel.ID
+		}
 		participants = append(participants, UserInfo{
-			Name: user.Username,
-			ID:   user.AsteriskAccount,
+			Name:    user.Username,
+			ID:      user.AsteriskAccount,
+			Channel: channel,
 		})
 		return true
 	})

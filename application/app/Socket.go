@@ -1,7 +1,6 @@
 package app
 
 import (
-	"encoding/json"
 	"protocall/application/applications"
 	"protocall/domain/entity"
 	"protocall/domain/services"
@@ -9,6 +8,10 @@ import (
 
 type Socket struct {
 	socketService services.Socket
+}
+
+func NewSocket(socketService services.Socket) *Socket {
+	return &Socket{socketService}
 }
 
 func (s Socket) PublishConnectionEvent(user *entity.User) error {
@@ -31,42 +34,39 @@ func (s Socket) PublishEndConference(conferenceID string) error {
 	return s.publishConferenceEvent("end", conferenceID)
 }
 
+func (s Socket) PublishUserMessage(user *entity.User, message entity.SocketMessage) error {
+	return s.socketService.Publish("notify#"+user.AsteriskAccount, message)
+}
+
 func (s Socket) publishConferenceEventWithUserData(event string, user *entity.User) error {
 	data, err := s.userMessage(event, user)
 	if err != nil {
 		return err
 	}
 
-	return s.socketService.Publish("conference~" + user.ConferenceID, data)
+	return s.socketService.Publish("conference~"+user.ConferenceID, data)
 }
 
 func (s Socket) publishConferenceEvent(event, conferenceID string) error {
-	data, err := s.eventMessage(event)
-	if err != nil {
-		return err
-	}
-	return s.socketService.Publish("conference~" + conferenceID, data)
+	return s.socketService.Publish("conference~"+conferenceID, entity.SocketMessage{
+		"event": event,
+	})
 }
 
-func (s Socket) userMessage(event string, user *entity.User) ([]byte, error) {
+func (s Socket) userMessage(event string, user *entity.User) (entity.SocketMessage, error) {
 	var userChannel string
 	if user.Channel != nil {
 		userChannel = user.Channel.ID
 	}
-	payload := map[string]interface{}{
+	payload := entity.SocketMessage{
 		"event": event,
-		"user": map[string]interface{}{
-			"id": user.AsteriskAccount,
-			"name": user.Username,
+		"user": entity.SocketMessage{
+			"id":      user.AsteriskAccount,
+			"name":    user.Username,
 			"channel": userChannel,
 		},
 	}
-
-	return json.Marshal(payload)
-}
-
-func (s Socket) eventMessage(event string) ([]byte, error) {
-	return json.Marshal(map[string]interface{}{"event": event})
+	return payload, nil
 }
 
 var _ applications.Socket = &Socket{}

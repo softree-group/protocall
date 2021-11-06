@@ -2,6 +2,7 @@ package app
 
 import (
 	"protocall/application/applications"
+	"protocall/domain/entity"
 	"protocall/domain/repository"
 
 	"github.com/CyCoreSystems/ari/v5"
@@ -9,22 +10,30 @@ import (
 )
 
 type EventListener struct {
-	handler applications.CallHandler
-	ari     ari.Client
-	reps    repository.Repositories
-	user applications.User
+	handler    applications.CallHandler
+	ari        ari.Client
+	reps       repository.Repositories
+	user       applications.User
 	conference applications.Conference
-	account applications.AsteriskAccount
+	account    applications.AsteriskAccount
+	socket     applications.Socket
 }
 
-func NewListener(reps repository.Repositories, client ari.Client, handler applications.CallHandler, user applications.User, conference applications.Conference, account applications.AsteriskAccount) *EventListener {
+func NewListener(reps repository.Repositories,
+	client ari.Client,
+	handler applications.CallHandler,
+	user applications.User,
+	conference applications.Conference,
+	account applications.AsteriskAccount,
+	socket applications.Socket) *EventListener {
 	return &EventListener{
-		handler: handler,
-		ari:     client,
-		reps:    reps,
-		user: user,
+		handler:    handler,
+		ari:        client,
+		reps:       reps,
+		user:       user,
 		conference: conference,
-		account: account,
+		account:    account,
+		socket:     socket,
 	}
 }
 
@@ -66,39 +75,42 @@ func (e *EventListener) Listen() {
 			user.Channel = channel.Key()
 			e.user.Save(user)
 
-			err = channel.Continue("conf", "5535", 0)
-			if err != nil {
-				logrus.Info("Fail to continue: ", err)
+			conference := e.conference.Get(user.ConferenceID)
+			if conference == nil {
+				logrus.Warn("no conference: ", user.ConferenceID)
+				e.socket.PublishUserMessage(user, entity.SocketMessage{
+					"event":   "fail",
+					"message": "no conference",
+				})
+				channel.Hangup()
+				continue
 			}
 
-			//bridge := e.ari.Bridge().Get(ari.NewKey(ari.BridgeKey, user.ConferenceID))
-			//if bridge == nil {
-			//	logrus.Warn("No bridge")
-			//	e.account.Free(channelData.Caller.Number)
-			//	e.user.Delete(sessionID)
-			//	channel.Hangup()
-			//	continue
-			//}
-			//
-			//conference := e.conference.Get(user.ConferenceID)
-			//if conference == nil {
-			//	logrus.Warn("no conference")
-			//	e.account.Free(channelData.Caller.Number)
-			//	e.user.Delete(sessionID)
-			//	bridge.Delete()
-			//	channel.Hangup()
-			//	continue
-			//}
-			//
-			//err = bridge.AddChannel(channel.ID())
-			//if err != nil {
-			//	logrus.Error("fail to add channel: ", channel.ID(), " ", err)
-			//	channel.Hangup()
-			//	continue
-			//}
-			//
-			//e.conference.JoinToConference(user, user.ConferenceID)
-			// TODO: socket publish about ready
+			if conference.IsRecording {
+				err = e.conference.StartRecordUser(user, user.ConferenceID)
+				if err != nil {
+					logrus.Error("fail to start record: ", err)
+				}
+			}
+
+			err = channel.Continue("conf", user.ConferenceID, 0)
+			if err != nil {
+				logrus.Info("Fail to continue: ", err)
+				e.socket.PublishUserMessage(user, entity.SocketMessage{
+					"event":   "fail",
+					"message": "fail to continue",
+				})
+				channel.Hangup()
+				continue
+			}
+
+			err = e.socket.PublishConnectedEvent(user)
+			err = e.socket.PublishUserMessage(user, entity.SocketMessage{
+				"event": "ready",
+			})
+			if err != nil {
+				logrus.Error("fail to send socket message: ", err)
+			}
 		case event := <-any.Events():
 			logrus.Info("Event type: ", event.GetType())
 		case event := <-leftBridge.Events():

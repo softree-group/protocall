@@ -5,6 +5,9 @@ import (
 	"protocall/application/app"
 	"protocall/application/applications"
 	"protocall/domain/repository"
+	"protocall/domain/services"
+	"protocall/infrastructure"
+	"protocall/infrastructure/bus"
 	"protocall/internal/config"
 
 	"github.com/CyCoreSystems/ari/v5/client/native"
@@ -19,7 +22,9 @@ type Applications struct {
 	AsteriskAccount applications.AsteriskAccount
 	Conference      applications.Conference
 	Connector       applications.Connector
-	AMI 			*app.AMIAsterisk
+	AMI             *app.AMIAsterisk
+	Socket          applications.Socket
+	Bus             services.Bus
 }
 
 func New(reps repository.Repositories) *Applications {
@@ -36,23 +41,30 @@ func New(reps repository.Repositories) *Applications {
 		logrus.Fatal("cannot connect to asterisk: ", err)
 	}
 
+	socketService := infrastructure.NewCentrifugo()
+	socketApp := app.NewSocket(socketService)
+
 	connector := app.NewConnector(ariClient, reps)
 
 	userApp := app.NewUser(reps)
 	conferenceApp := app.NewConference(reps, ariClient)
 	asteriskApp := app.NewAsteriskAccount(reps, viper.GetString(config.ARIAccountsFile))
-	ami, err := app.NewAMIAsterisk(context.Background(), viper.GetString(config.AMIHost) + ":" + viper.GetString(config.AMIPort), viper.GetString(config.AMIUser), viper.GetString(config.AMIPassword))
+	ami, err := app.NewAMIAsterisk(context.Background(), viper.GetString(config.AMIHost)+":"+viper.GetString(config.AMIPort), viper.GetString(config.AMIUser), viper.GetString(config.AMIPassword))
 	if err != nil {
 		logrus.Fatal("Fail connect to ami: ", err)
 	}
 
+	busService := bus.New()
+
 	return &Applications{
-		Listener:        app.NewListener(reps, ariClient, app.NewHandler(ariClient, reps, connector), userApp, conferenceApp, asteriskApp),
-		Snoopy:          app.NewSnoopy(),
+		Listener:        app.NewListener(reps, ariClient, app.NewHandler(ariClient, reps, connector), userApp, conferenceApp, asteriskApp, socketApp),
+		Snoopy:          app.NewSnoopy(busService),
 		Conference:      conferenceApp,
 		AsteriskAccount: asteriskApp,
 		User:            userApp,
 		Connector:       connector,
-		AMI: ami,
+		AMI:             ami,
+		Socket:          socketApp,
+		Bus:             busService,
 	}
 }

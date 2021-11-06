@@ -2,8 +2,10 @@ package infrastructure
 
 import (
 	"encoding/json"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/valyala/fasthttp"
+	"protocall/domain/entity"
 	"protocall/domain/services"
 	"protocall/internal/config"
 )
@@ -18,21 +20,23 @@ func NewCentrifugo() *Centrifugo {
 type publishData struct {
 	Method string `json:"method"`
 	Params struct {
-		Channel string      `json:"channel"`
-		Data    []byte `json:"data"`
+		Channel string               `json:"channel"`
+		Data    entity.SocketMessage `json:"data"`
 	}
 }
 
-func (c Centrifugo) Publish(channel string, payload []byte) error {
+func (c Centrifugo) Publish(channel string, payload entity.SocketMessage) error {
+
 	publish := publishData{
 		Method: "publish",
 		Params: struct {
-			Channel string      `json:"channel"`
-			Data    []byte `json:"data"`
+			Channel string               `json:"channel"`
+			Data    entity.SocketMessage `json:"data"`
 		}{Channel: channel, Data: payload},
 	}
 
 	data, err := json.Marshal(publish)
+	logrus.Debugf("socket: %s", data)
 	if err != nil {
 		return err
 	}

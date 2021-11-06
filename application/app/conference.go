@@ -97,12 +97,10 @@ func postSnoop(id, snoopID, appArgs, app, spy, whisper string) (*fasthttp.Respon
 func (c *Conference) StartRecordUser(user *entity.User, conferenceID string) error {
 	user.RecordPath = fmt.Sprintf("%v/%v/%v.wav", conferenceID, user.Username, time.Now().UTC().Unix())
 
-	fmt.Println("HHHHHHH", user.RecordPath)
-
 	resp, err := postSnoop(
 		user.Channel.ID,
 		fmt.Sprintf("%s_%v_%s", conferenceID, time.Now().UTC().Unix(), user.Username),
-		user.RecordPath,
+		user.RecordPath+","+user.SessionID,
 		viper.GetString(config.ARISnoopyApplication),
 		"in",
 		"both",
@@ -148,14 +146,6 @@ func (c *Conference) Get(meetID string) *entity.Conference {
 
 func (c *Conference) Delete(meetID string) {
 	c.reps.DeleteConference(meetID)
-	err := c.ari.Bridge().Delete(&ari.Key{
-		Kind: ari.BridgeKey,
-		ID:   meetID,
-		App:  viper.GetString(config.ARIApplication),
-	})
-	if err != nil {
-		logrus.Error("fail to delete bridge: ", err)
-	}
 }
 
 func (c *Conference) TranslateRecord(string) (*entity.Message, error) {

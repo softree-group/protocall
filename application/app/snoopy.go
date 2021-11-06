@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"protocall/domain/services"
 	"protocall/internal/config"
 
 	"github.com/CyCoreSystems/ari/v5"
@@ -13,9 +14,10 @@ import (
 
 type Snoopy struct {
 	ari ari.Client
+	bus services.Bus
 }
 
-func NewSnoopy() *Snoopy {
+func NewSnoopy(bus services.Bus) *Snoopy {
 	ariClient, err := native.Connect(&native.Options{
 		Application:  viper.GetString(config.ARISnoopyApplication),
 		URL:          viper.GetString(config.ARIUrl),
@@ -29,15 +31,20 @@ func NewSnoopy() *Snoopy {
 
 	return &Snoopy{
 		ari: ariClient,
+		bus: bus,
 	}
 }
 
-func (s *Snoopy) channelHandler(channel *ari.ChannelHandle, recordPath string) {
+func (s *Snoopy) channelHandler(channel *ari.ChannelHandle, recordPath string, sessionID string) {
 	sub := channel.Subscribe(ari.Events.All)
-	end := channel.Subscribe(ari.Events.StasisEnd)
+	//end := channel.Subscribe(ari.Events.StasisEnd)
+	logrus.Debug("Record Path: ", recordPath)
+	leave := s.bus.Subscribe("leave/" + sessionID)
 
 	defer sub.Cancel()
-	defer end.Cancel()
+	//defer end.Cancel()
+	defer leave.Cancel()
+	defer channel.Hangup()
 
 	ctx := context.Background()
 	rec := record.Record(ctx, channel)
@@ -46,15 +53,11 @@ func (s *Snoopy) channelHandler(channel *ari.ChannelHandle, recordPath string) {
 		select {
 		case event := <-sub.Events():
 			logrus.Info("In SPY: ", event.GetType())
-		case <-end.Events():
+		case <-leave.Channel():
 			logrus.Info("saving record for ", channel.ID())
-			res, err := rec.Result()
-			if err != nil {
-				logrus.Error("Fail to get result from record for channel ", channel.ID(), ". Error: ", err)
-				return
-			}
+			res := rec.Stop()
 
-			err = res.Save(recordPath)
+			err := res.Save(recordPath)
 			if err != nil {
 				logrus.Error("fail to save result record for channel ", channel.ID(), ". Error: ", err)
 				return
@@ -77,6 +80,7 @@ func (s *Snoopy) listen() {
 		go s.channelHandler(
 			channel,
 			value.Args[0],
+			value.Args[1],
 		)
 	}
 }

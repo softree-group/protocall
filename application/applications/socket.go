@@ -8,4 +8,5 @@ type Socket interface {
 	PublishLeaveEvent(user *entity.User) error
 	PublishStartRecordEvent(conferenceID string) error
 	PublishEndConference(conferenceID string) error
+	PublishUserMessage(user *entity.User, message entity.SocketMessage) error
 }
