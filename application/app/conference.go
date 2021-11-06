@@ -148,18 +148,50 @@ func (c *Conference) Delete(meetID string) {
 	c.reps.DeleteConference(meetID)
 }
 
-func (c *Conference) TranslateRecord(string) (*entity.Message, error) {
-	return nil, nil
-}
-
-func (c *Conference) UploadRecord(user *entity.User, meetID string) error {
-	if err := c.reps.Upload(user.RecordPath, user.RecordPath); err != nil {
+func (c *Conference) TranslateRecord(user *entity.User, conference *entity.Conference) error {
+	if err := c.reps.TranslateConference(user, conference); err != nil {
 		logrus.Error(err)
 		return err
 	}
 	return nil
 }
 
-func (c *Conference) SendConference() {}
+func (c *Conference) UploadRecord(user *entity.User, meetID string) error {
+	if err := c.reps.UploadConference(user.RecordPath); err != nil {
+		logrus.Error(err)
+		return err
+	}
+	return nil
+}
+
+func (c *Conference) CreateProtocol(conference *entity.Conference) error {
+	sendTo := []string{}
+	conference.Participants.Ascend(
+		func(i btree.Item) bool {
+			if i == nil {
+				return false
+			}
+
+			participant, ok := i.(*entity.User)
+			if !ok {
+				return false
+			}
+
+			if participant.Email != "" {
+				fmt.Println("ASCEND email", participant.Email)
+				sendTo = append(sendTo, participant.Email)
+			}
+			return true
+		},
+	)
+
+	fmt.Println("AFTER", sendTo)
+	if err := c.reps.CreateProtocol(conference.ID, sendTo); err != nil {
+		logrus.Error(err)
+		return err
+	}
+
+	return nil
+}
 
 var _ applications.Conference = &Conference{}

@@ -5,5 +5,6 @@ type Repositories interface {
 	AsteriskAccountRepository
 	User
 	Conference
-	Record
+	ConferenceStorage
+	ConferenceTranslator
 }

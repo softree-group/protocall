@@ -67,12 +67,17 @@ RUN mkdir /opt/vosk-model-ru \
     && rm -rf model/rescore/G.carpa \
     && rm -rf vosk-model-ru-${RUVERSION}.zip
 
-RUN pip3 install grpcio-tools \
-    && cd /opt/vosk-server/grpc \
-    && python3 -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. stt_service.proto
+RUN cd /opt \
+    && wget -q https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.gz \
+    && tar xzf boost_1_76_0.tar.gz \
+    && rm boost_1_76_0.tar.gz \
+    && cd /opt/vosk-server/websocket-cpp \
+    && g++ -std=c++17 -O3 -I/opt/boost_1_76_0 -I/opt/vosk-api/src -o asr_server asr_server.cpp -L/opt/vosk-api/src -Wl,-rpath=/opt/vosk-api/src -lvosk -lpthread -ldl \
+    && strip asr_server \
+    && rm -rf /opt/boost_1_76_0
 
-WORKDIR /opt/vosk-server/grpc
+WORKDIR /opt/vosk-server/websocket-cpp
 
-ENTRYPOINT [ "python3", "stt_server.py", "/opt/vosk-model-ru/model" ]
+ENTRYPOINT [ "asr_server" ]
 
-EXPOSE 5001
+# CMD [ "0.0.0.0", "80", "1", "/opt/vosk-model-ru/model" ]

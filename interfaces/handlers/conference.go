@@ -4,18 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/google/btree"
-	"net/http"
-	"protocall/application"
-	"protocall/domain/entity"
-
 	"github.com/sirupsen/logrus"
 	"github.com/valyala/fasthttp"
+	"protocall/application"
+	"protocall/domain/entity"
 )
 
 func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	user := getUser(ctx, apps)
 	if user != nil {
-		ctx.Error("You are already signed in", http.StatusBadRequest)
+		ctx.Error("You are already signed in", fasthttp.StatusBadRequest)
 		return
 	}
 
@@ -26,7 +24,7 @@ func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 
 	conference, err := apps.Conference.StartConference(user)
 	if err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
+		ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
 		return
 	}
 
@@ -38,7 +36,7 @@ func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		"cent_token": createCentToken(user.AsteriskAccount),
 	})
 	if err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
+		ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
 		return
 	}
 
@@ -49,7 +47,7 @@ func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 func join(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	meetID := ctx.UserValue("meetID").(string)
 	if !apps.Conference.IsExist(meetID) {
-		ctx.Error("Conference does not exist", http.StatusNotFound)
+		ctx.Error("Conference does not exist", fasthttp.StatusNotFound)
 		return
 	}
 
@@ -60,7 +58,7 @@ func join(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 
 	conference, err := apps.Conference.JoinToConference(user, meetID)
 	if err != nil {
-		ctx.Error(err.Error(), http.StatusBadRequest)
+		ctx.Error(err.Error(), fasthttp.StatusBadRequest)
 		return
 	}
 
@@ -70,7 +68,7 @@ func join(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		"cent_token": createCentToken(user.AsteriskAccount),
 	})
 	if err != nil {
-		ctx.Error(err.Error(), http.StatusInternalServerError)
+		ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
 		return
 	}
 
@@ -92,7 +90,7 @@ func getUser(ctx *fasthttp.RequestCtx, apps *application.Applications) *entity.U
 func ready(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	user := getUser(ctx, apps)
 	if user == nil {
-		ctx.SetStatusCode(http.StatusBadRequest)
+		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		return
 	}
 
@@ -102,7 +100,7 @@ func ready(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	user := getUser(ctx, apps)
 	if user == nil {
-		ctx.SetStatusCode(http.StatusBadRequest)
+		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		return
 	}
 
@@ -122,6 +120,26 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	defer ctx.Response.Header.DelCookie(sessionCookie)
 
 	conference := apps.Conference.Get(user.ConferenceID)
+
+	if conference.IsRecording {
+		if err := apps.Conference.UploadRecord(user, user.ConferenceID); err != nil {
+			ctx.SetStatusCode(fasthttp.StatusInternalServerError)
+			return
+		}
+
+		if err := apps.Conference.TranslateRecord(user, conference); err != nil {
+			ctx.SetStatusCode(fasthttp.StatusInternalServerError)
+			return
+		}
+
+		if conference.HostUserID == user.AsteriskAccount {
+			if err := apps.Conference.CreateProtocol(conference); err != nil {
+				ctx.SetStatusCode(fasthttp.StatusInternalServerError)
+				return
+			}
+		}
+	}
+
 	conference.Participants.Delete(user)
 
 	apps.Bus.Publish("leave/"+user.SessionID, "")
@@ -151,11 +169,10 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 
 	if conference.IsRecording {
 		if err := apps.Conference.UploadRecord(user, user.ConferenceID); err != nil {
-			ctx.SetStatusCode(http.StatusInternalServerError)
+			ctx.SetStatusCode(fasthttp.StatusInternalServerError)
 			return
 		}
 	}
-
 }
 
 func record(ctx *fasthttp.RequestCtx, apps *application.Applications) {
@@ -167,7 +184,7 @@ func record(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 
 	err := apps.Conference.StartRecord(user, user.ConferenceID)
 	if err != nil {
-		ctx.SetStatusCode(http.StatusForbidden)
+		ctx.SetStatusCode(fasthttp.StatusForbidden)
 		logrus.Error("fail to start record: ", err)
 		return
 	}

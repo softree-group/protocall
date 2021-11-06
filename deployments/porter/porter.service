@@ -1,0 +1,26 @@
+[Unit]
+Description=Protocall service to upload files from disk to s3
+After=netowork.target
+
+[Install]
+WantedBy=multi-user.target
+Alias=porter.service
+
+[Service]
+Type=simple
+
+User=porter
+Group=porter
+
+ProtectSystem=full
+ProtectHome=true
+
+EnvironmentFile=/run/porter/.env
+
+ExecStart=/usr/sbin/porter -f /etc/porter/porter.yaml
+
+KillSignal=SIGTERM
+SendSIGKILL=no
+
+Restart=on-abort
+RestartSec=5s

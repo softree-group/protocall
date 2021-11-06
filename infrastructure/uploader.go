@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	errUploadFile = errors.New("error while send request to uploader")
+	errUploadFile = errors.New("error while send request to rising")
 )
 
 type UploaderConfig struct {
@@ -31,12 +31,12 @@ func NewUploader(config *UploaderConfig) *Uploader {
 	}
 }
 
-func (u *Uploader) Upload(src, dest string) error {
+func (u *Uploader) UploadConference(path string) error {
 	resp, err := u.httpClient.Post(
 		fmt.Sprintf("%v/upload?from=%v&to=%v",
 			u.addr,
-			src,
-			dest,
+			path,
+			path,
 		),
 		"",
 		nil,

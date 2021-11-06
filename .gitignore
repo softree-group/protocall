@@ -7,6 +7,9 @@ config.yaml
 .DS_Store
 vendor/
 test_dir/
-**/build
+**/build_dir
 connector.yaml
+clerk.yaml
+rising.yaml
 /protocall-front
+centrifugo.json
