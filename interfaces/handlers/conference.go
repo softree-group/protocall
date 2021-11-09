@@ -166,13 +166,6 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		_ = apps.Socket.PublishEndConference(user.ConferenceID)
 		apps.Conference.Delete(user.ConferenceID)
 	}
-
-	if conference.IsRecording {
-		if err := apps.Conference.UploadRecord(user, user.ConferenceID); err != nil {
-			ctx.SetStatusCode(fasthttp.StatusInternalServerError)
-			return
-		}
-	}
 }
 
 func record(ctx *fasthttp.RequestCtx, apps *application.Applications) {
