@@ -105,6 +105,7 @@ func (as *AMIAsterisk) run(ctx context.Context) {
 			return
 		default:
 			events, err := ami.Events(ctx, as.socket)
+
 			if err != nil {
 				log.Printf("AMI events failed: %v\n", err)
 				return

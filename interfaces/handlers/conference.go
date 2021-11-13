@@ -121,6 +121,8 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 
 	conference := apps.Conference.Get(user.ConferenceID)
 
+	apps.Bus.Publish("leave/"+user.SessionID, "")
+
 	if conference.IsRecording {
 		if err := apps.Conference.UploadRecord(user, user.ConferenceID); err != nil {
 			ctx.SetStatusCode(fasthttp.StatusInternalServerError)
@@ -141,8 +143,6 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	}
 
 	conference.Participants.Delete(user)
-
-	apps.Bus.Publish("leave/"+user.SessionID, "")
 
 	if conference.HostUserID == user.AsteriskAccount {
 		conference.Participants.Ascend(func(item btree.Item) bool {

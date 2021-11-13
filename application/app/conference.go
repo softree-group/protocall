@@ -69,7 +69,7 @@ func postSnoop(id, snoopID, appArgs, app, spy, whisper string) (*fasthttp.Respon
 
 	req.Header.SetMethod("POST")
 	req.SetRequestURI(
-		"http://pbx.softex-team.ru:10088/ari/channels/" +
+		viper.GetString(config.ARIUrl) + "/channels/" +
 			id +
 			"/snoop?api_key=" +
 			viper.GetString(config.ARIUser) +
