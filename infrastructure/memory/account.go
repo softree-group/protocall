@@ -12,14 +12,16 @@ import (
 )
 
 type AsteriskAccountMemory struct {
-	store *btree.BTree
-	lock  *sync.RWMutex
+	store   *btree.BTree
+	userMap map[string]string
+	lock    *sync.RWMutex
 }
 
 func NewAsteriskAccount() *AsteriskAccountMemory {
 	repo := &AsteriskAccountMemory{
-		lock:  &sync.RWMutex{},
-		store: btree.New(viper.GetInt(config.Participant)),
+		lock:    &sync.RWMutex{},
+		store:   btree.New(viper.GetInt(config.Participant)),
+		userMap: map[string]string{},
 	}
 	return repo
 }
@@ -50,12 +52,15 @@ func (a *AsteriskAccountMemory) TakeAccount(account, userID string) {
 		logrus.Error("Fail to take account")
 	}
 
+	a.userMap[account] = userID
+
 	accountItem := item.(*entity.AsteriskAccount)
 	accountItem.UserID = userID
 	a.store.ReplaceOrInsert(accountItem)
 }
 
 func (a *AsteriskAccountMemory) FreeAccount(account string) {
+	delete(a.userMap, account)
 	a.TakeAccount(account, "")
 }
 
@@ -72,6 +77,10 @@ func (a *AsteriskAccountMemory) GetAccount(account string) *entity.AsteriskAccou
 
 func (a *AsteriskAccountMemory) SaveAccount(account entity.AsteriskAccount) {
 	a.store.ReplaceOrInsert(&account)
+}
+
+func (a *AsteriskAccountMemory) Who(account string) string {
+	return a.userMap[account]
 }
 
 var _ repository.AsteriskAccountRepository = &AsteriskAccountMemory{}

@@ -60,4 +60,8 @@ func (a *AsteriskAccount) Free(account string) {
 	a.reps.FreeAccount(account)
 }
 
+func (a *AsteriskAccount) Who(account string) string {
+	return a.reps.Who(account)
+}
+
 var _ applications.AsteriskAccount = &AsteriskAccount{}

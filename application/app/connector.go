@@ -1,7 +1,6 @@
 package app
 
 import (
-	"errors"
 	"fmt"
 	"protocall/application/applications"
 	"protocall/domain/entity"
@@ -68,7 +67,7 @@ func (c *Connector) CreateBridge(id string) (*ari.BridgeHandle, error) {
 		XXX_sizecache:        0,
 	}
 
-	return c.ari.Bridge().Create(key, "mixing", key.ID)
+	return c.ari.Bridge().Create(key, "video_sfu", key.ID)
 }
 
 func (c *Connector) CallAndConnect(user *entity.User) (*ari.Key, error) {
@@ -111,16 +110,7 @@ func (c *Connector) Connect(bridge *ari.BridgeHandle, channelID string) error {
 }
 
 func (c *Connector) Disconnect(bridgeID string, channel *ari.Key) error {
-	bridge := c.getBridge(bridgeID)
-	if bridge == nil {
-		return errors.New("no bridge")
-	}
-	err := bridge.RemoveChannel(channel.ID)
-	if err != nil {
-		logrus.Error("fail to remove from channel: ", err)
-	}
-
-	err = c.ari.Channel().Get(channel).Hangup()
+	err := c.ari.Channel().Get(channel).Hangup()
 	if err != nil {
 		logrus.Error("fail to delete channel: ", err)
 	}

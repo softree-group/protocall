@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: connector-pod
+  namespace: protocall
+spec:
+  selector:
+    matchLabels:
+      app: connector
+  template:
+    metadata:
+      labels:
+        app: connector
+    spec:
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      terminationGracePeriodSeconds: 60
+      containers:
+      - name: connector
+        image: connector
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app
+        - name: accounts-volume
+          mountPath: /app
+        ports:
+        - name: connector
+          containerPort: 80
+      volumes:
+      - name: config-volume
+        configMap:
+          name: connector-config
+      - name: accounts-volume
+        configMap:
+          name: connector-accounts
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: connector-service
+  namespace: protocall
+spec:
+  type: NodePort
+  selector:
+    app: connector
+  ports:
+  - name: connector
+    port: 30003
+    targetPort: connector

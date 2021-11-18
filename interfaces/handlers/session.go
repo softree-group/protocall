@@ -81,7 +81,7 @@ func session(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	data, _ := json.Marshal(map[string]interface{}{
 		"conference": conference,
 		"account":    account,
-		"cent_token": createCentToken(user.SessionID),
+		"cent_token": createCentToken(account.Username),
 	})
 
 	ctx.Response.SetBody(data)

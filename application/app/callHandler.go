@@ -1,8 +1,10 @@
 package app
 
 import (
+	"github.com/spf13/viper"
 	"protocall/application/applications"
 	"protocall/domain/repository"
+	"protocall/internal/config"
 
 	"github.com/CyCoreSystems/ari/v5"
 	"github.com/sirupsen/logrus"
@@ -56,7 +58,7 @@ func (c *CallHandler) Handle(channel *ari.ChannelHandle) {
 	logrus.Infof("DATA: %v+", data)
 
 	_, err = channel.Snoop("snoop_"+channel.ID(), &ari.SnoopOptions{
-		App:     "snoopy",
+		App:     viper.GetString(config.ARISnoopyApplication),
 		AppArgs: channel.ID(),
 		Spy:     "in",
 		Whisper: "both",

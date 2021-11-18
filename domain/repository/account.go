@@ -8,4 +8,5 @@ type AsteriskAccountRepository interface {
 	TakeAccount(account string, userID string)
 	FreeAccount(account string)
 	SaveAccount(account entity.AsteriskAccount)
+	Who(account string) string
 }

@@ -10,6 +10,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/go-uuid v1.0.1
+	github.com/heltonmarx/goami v1.0.1-0.20211007112051-e5aeb6b4a015
 	github.com/lab259/cors v0.2.0
 	github.com/mark-by/logutils v0.3.0
 	github.com/minio/minio-go/v7 v7.0.15

@@ -7,4 +7,5 @@ type AsteriskAccount interface {
 	Get(account string) *entity.AsteriskAccount
 	Take(account string, userID string)
 	Free(account string)
+	Who(account string) string
 }
