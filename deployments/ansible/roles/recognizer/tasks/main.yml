@@ -1,0 +1,7 @@
+---
+- name: Turn off swap
+  shell: swapoff -a
+
+- name: Create recognizer container
+  shell: |
+    docker run -d --oom-kill-disable -p {{dest_port}}:{{src_port}} {{image}}

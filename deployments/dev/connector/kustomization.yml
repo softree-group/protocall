@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: dev
+resources:
+  - ../../base/connector
+patchesStrategicMerge:
+  - limits.yml
+configMapGenerator:
+  - name: connector-config
+    files:
+      - config.yml
+  - name: accounts
+    files:
+      - accounts.json
+images:
+  - name: connector-image
+    newName: ghcr.io/softree-group/protocall-connector/connector
+    newTag: 0.1.0

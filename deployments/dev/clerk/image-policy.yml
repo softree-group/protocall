@@ -1,0 +1,9 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clerk
+spec:
+  spec:
+    containers:
+      - name: clerk
+        imagePullPolicy: Always

@@ -4,5 +4,19 @@ config.yaml
 .idea
 .env
 .DS_Store
-configs
-**/*-secret.yml
+
+docker-config.json
+
+# tf
+**/*.tfstate
+**/*.tfstate.*
+**/.terraform/*
+**/.terraformrc
+**/terraform.rc
+
+# k8s config
+kube.yml
+*-values.yml
+
+# ansible
+inventory.toml

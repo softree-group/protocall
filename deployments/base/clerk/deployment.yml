@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clerk
+spec:
+  selector:
+    matchLabels:
+      app: clerk
+  template:
+    metadata:
+      labels:
+        app: clerk
+    spec:
+      containers:
+        - name: clerk
+          image: clerk-image
+          command: ["clerk", "-f", "/etc/clerk/config.yml"]
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/clerk
+          ports:
+            - name: clerk
+              containerPort: 80
+          env:
+            - name: ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: clerk-secrets
+                  key: ACCESS_KEY
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: clerk-secrets
+                  key: SECRET_KEY
+            - name: EMAIL_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: clerk-secrets
+                  key: EMAIL_KEY
+      volumes:
+        - name: config-volume
+          configMap:
+            name: config
+      imagePullSecrets:
+        - name: regcred

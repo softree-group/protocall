@@ -1,0 +1,34 @@
+version: '3.9'
+services:
+  connector:
+    image: ghcr.io/softree-group/protocall-connector/connector:0.1.0
+    volumes:
+      - ${PWD}/accounts.json:/app/accounts.json
+      - ${PWD}/connector.yml:/app/config.yml
+    command: ["-s", "/app/config.yml"]
+    networks:
+      - protocall
+    ports:
+      - 127.0.0.1:8080:8080
+  clerk:
+    image: ghcr.io/softree-group/protocall-connector/clerk:0.1.0
+    environment:
+      - ACCESS_KEY
+      - SECRET_KEY
+      - EMAIL_KEY
+    volumes:
+      - ${PWD}/clerk.yml:/app/config.yml
+    command: ["-f", "/app/config.yml"]
+    networks:
+      - protocall
+  centrifugo:
+    image: centrifugo/centrifugo
+    command: ["centrifugo", "-c", "centrifugo.json"]
+    networks:
+      - protocall
+    ports:
+      - 127.0.0.1:9000:9000
+    volumes:
+      - ${PWD}/centrifugo.json:/centrifugo.json
+networks:
+  protocall:

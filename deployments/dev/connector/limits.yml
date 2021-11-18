@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: connector
+spec:
+  selector:
+    matchLabels:
+      app: connector
+  template:
+    spec:
+      containers:
+        - name: connector
+          resources:
+            requests:
+              memory: 1Gi
+              cpu: 250m
+            limits:
+              memory: 2Gi
+              cpu: 500m
