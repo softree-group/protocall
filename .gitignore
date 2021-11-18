@@ -1,15 +1,8 @@
-connector
 deploy.sh
 accounts.json
 config.yaml
 .idea
 .env
 .DS_Store
-vendor/
-test_dir/
-**/build_dir
-connector.yaml
-clerk.yaml
-rising.yaml
-/protocall-front
-centrifugo.json
+configs
+**/*-secret.yml
