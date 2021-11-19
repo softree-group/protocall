@@ -1,4 +1,4 @@
-package infrastructure
+package porter
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	errUploadFile = errors.New("error while send request to rising")
+	errUploadFile = errors.New("error while send request to porter")
 )
 
 type PorterClientConfig struct {
@@ -19,7 +19,7 @@ type PorterClientConfig struct {
 }
 
 type PorterClient struct {
-	*http.Client
+	http.Client
 	addr string
 }
 
@@ -31,11 +31,11 @@ func NewPorterClient(config *PorterClientConfig) *PorterClient {
 	return t
 }
 
-func (p *PorterClient) UploadConference(ctx context.Context, path string) error {
+func (p *PorterClient) UploadRecord(ctx context.Context, path string) error {
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		fmt.Sprintf("%v/upload?from=%v&to=%v",
+		fmt.Sprintf("%v/records?from=%v&to=%v",
 			p.addr,
 			path,
 			path,
@@ -53,7 +53,7 @@ func (p *PorterClient) UploadConference(ctx context.Context, path string) error 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
-		return errUploadFile
+		return fmt.Errorf("%w: status code %v", errUploadFile, resp.StatusCode)
 	}
 
 	return nil

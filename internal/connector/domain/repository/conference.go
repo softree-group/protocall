@@ -1,6 +1,11 @@
 package repository
 
-import "protocall/domain/entity"
+import (
+	"context"
+	"protocall/internal/connector/domain/entity"
+	"protocall/internal/stapler"
+	"protocall/internal/translator"
+)
 
 type Conference interface {
 	GetConference(conferenceID string) *entity.Conference
@@ -9,10 +14,10 @@ type Conference interface {
 }
 
 type ConferenceStorage interface {
-	UploadConference(path string) error
+	UploadRecord(ctx context.Context, path string) error
 }
 
 type ConferenceTranslator interface {
-	TranslateConference(user *entity.User, conference *entity.Conference) error
-	CreateProtocol(conferenceID string, sendTo []string) error
+	TranslateRecord(ctx context.Context, data *translator.TranslateRequest) error
+	CreateProtocol(ctx context.Context, data *stapler.ProtocolRequest) error
 }

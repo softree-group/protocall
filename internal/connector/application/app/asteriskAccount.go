@@ -5,8 +5,8 @@ import (
 	"io"
 	"os"
 
-	"protocall/application/applications"
-	"protocall/domain/entity"
+	"protocall/internal/connector/application/applications"
+	"protocall/internal/connector/domain/entity"
 	"protocall/internal/connector/domain/repository"
 
 	"github.com/sirupsen/logrus"

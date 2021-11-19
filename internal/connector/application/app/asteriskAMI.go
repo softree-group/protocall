@@ -6,7 +6,7 @@ import (
 	"log"
 	"sync"
 
-	"protocall/domain/entity"
+	"protocall/internal/connector/domain/entity"
 
 	"github.com/heltonmarx/goami/ami"
 )

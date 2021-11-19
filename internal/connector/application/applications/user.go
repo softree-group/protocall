@@ -1,6 +1,6 @@
 package applications
 
-import "protocall/domain/entity"
+import "protocall/internal/connector/domain/entity"
 
 type User interface {
 	Find(sessionID string) *entity.User

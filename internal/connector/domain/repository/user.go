@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"protocall/domain/entity"
+	"protocall/internal/connector/domain/entity"
 )
 
 type User interface {

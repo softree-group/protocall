@@ -2,10 +2,11 @@ package app
 
 import (
 	"fmt"
-	"protocall/application/applications"
-	"protocall/domain/entity"
-	"protocall/domain/repository"
-	"protocall/internal/config"
+
+	"protocall/internal/connector/application/applications"
+	"protocall/internal/connector/config"
+	"protocall/internal/connector/domain/entity"
+	"protocall/internal/connector/domain/repository"
 
 	"github.com/CyCoreSystems/ari/v5"
 	"github.com/sirupsen/logrus"

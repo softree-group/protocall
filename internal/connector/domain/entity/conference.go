@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"protocall/internal/config"
+	"protocall/internal/connector/config"
 	"time"
 
 	"github.com/google/btree"

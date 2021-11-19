@@ -9,15 +9,12 @@ Alias=porter.service
 [Service]
 Type=simple
 
-User=porter
-Group=porter
-
 ProtectSystem=full
 ProtectHome=true
 
 EnvironmentFile=/run/porter/.env
 
-ExecStart=/usr/sbin/porter -f /etc/porter/porter.yaml
+ExecStart=/usr/sbin/porter -f /etc/porter/config.yml
 
 KillSignal=SIGTERM
 SendSIGKILL=no

@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"time"
 
-	"protocall/internal/clerk/stapler"
-	"protocall/internal/clerk/translator"
+	"protocall/internal/stapler"
+	"protocall/internal/translator"
 )
 
 var (
@@ -25,11 +25,10 @@ type ClerkClientConfig struct {
 
 type ClerkClient struct {
 	http.Client
-
 	addr string
 }
 
-func NewTranslator(config *ClerkClientConfig) *ClerkClient {
+func NewClerkClient(config *ClerkClientConfig) *ClerkClient {
 	t := &ClerkClient{
 		addr: fmt.Sprintf("http://%v:%v", config.Host, config.Port),
 	}
@@ -37,7 +36,7 @@ func NewTranslator(config *ClerkClientConfig) *ClerkClient {
 	return t
 }
 
-func (c *ClerkClient) TranslateConference(ctx context.Context, data *translator.TranslateRequest) error {
+func (c *ClerkClient) TranslateRecord(ctx context.Context, data *translator.TranslateRequest) error {
 	body, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -46,7 +45,7 @@ func (c *ClerkClient) TranslateConference(ctx context.Context, data *translator.
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
-		fmt.Sprintf("%v/records", c.addr),
+		fmt.Sprintf("%v/translations", c.addr),
 		bytes.NewReader(body),
 	)
 	if err != nil {

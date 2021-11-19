@@ -14,7 +14,8 @@ type Server struct {
 	http http.Server
 }
 
-func NewServer(c *ServerConfig, mux *http.ServeMux) *Server {
+func NewServer(mux *http.ServeMux, c *ServerConfig) *Server {
+
 	return &Server{
 		http: http.Server{
 			Addr:    fmt.Sprintf("%v:%v", c.Host, c.Port),

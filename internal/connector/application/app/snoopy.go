@@ -2,8 +2,9 @@ package app
 
 import (
 	"context"
-	"protocall/domain/services"
-	"protocall/internal/config"
+
+	"protocall/internal/connector/config"
+	"protocall/internal/connector/domain/services"
 
 	"github.com/CyCoreSystems/ari/v5"
 	"github.com/CyCoreSystems/ari/v5/client/native"

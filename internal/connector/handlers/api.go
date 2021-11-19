@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"fmt"
-	"protocall/application"
-	"protocall/internal/config"
+	"protocall/internal/connector/application"
+	"protocall/internal/connector/config"
 
 	"github.com/fasthttp/router"
 	"github.com/mark-by/logutils"

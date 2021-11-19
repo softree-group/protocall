@@ -2,13 +2,14 @@ package application
 
 import (
 	"context"
-	"protocall/application/app"
-	"protocall/application/applications"
-	"protocall/domain/repository"
-	"protocall/domain/services"
-	"protocall/infrastructure"
-	"protocall/infrastructure/bus"
-	"protocall/internal/config"
+
+	"protocall/internal/connector/application/app"
+	"protocall/internal/connector/application/applications"
+	"protocall/internal/connector/centrifugo"
+	"protocall/internal/connector/config"
+	"protocall/internal/connector/domain/repository"
+	"protocall/internal/connector/domain/services"
+	"protocall/pkg/bus"
 
 	"github.com/CyCoreSystems/ari/v5/client/native"
 	"github.com/sirupsen/logrus"
@@ -41,7 +42,7 @@ func New(reps repository.Repositories) *Applications {
 		logrus.Fatal("cannot connect to asterisk: ", err)
 	}
 
-	socketService := infrastructure.NewCentrifugo()
+	socketService := centrifugo.NewCentrifugo()
 	socketApp := app.NewSocket(socketService)
 
 	connector := app.NewConnector(ariClient, reps)

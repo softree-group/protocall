@@ -1,10 +1,18 @@
 package app
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"time"
+
+	"protocall/internal/connector/application/applications"
+	"protocall/internal/connector/config"
+	"protocall/internal/connector/domain/entity"
+	"protocall/internal/connector/domain/repository"
+	"protocall/internal/stapler"
+	"protocall/internal/translator"
 
 	"github.com/CyCoreSystems/ari/v5"
 	"github.com/google/btree"
@@ -12,11 +20,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/valyala/fasthttp"
-
-	"protocall/application/applications"
-	"protocall/domain/entity"
-	"protocall/domain/repository"
-	"protocall/internal/config"
 )
 
 type Conference struct {
@@ -149,7 +152,14 @@ func (c *Conference) Delete(meetID string) {
 }
 
 func (c *Conference) TranslateRecord(user *entity.User, conference *entity.Conference) error {
-	if err := c.reps.TranslateConference(user, conference); err != nil {
+	if err := c.reps.TranslateRecord(context.TODO(), &translator.TranslateRequest{
+		StartTime: conference.Start,
+		User: translator.User{
+			Username: user.Username,
+			Email:    user.Email,
+			Path:     user.RecordPath,
+		},
+	}); err != nil {
 		logrus.Error(err)
 		return err
 	}
@@ -157,7 +167,7 @@ func (c *Conference) TranslateRecord(user *entity.User, conference *entity.Confe
 }
 
 func (c *Conference) UploadRecord(user *entity.User, meetID string) error {
-	if err := c.reps.UploadConference(user.RecordPath); err != nil {
+	if err := c.reps.UploadRecord(context.TODO(), user.RecordPath); err != nil {
 		logrus.Error(err)
 		return err
 	}
@@ -178,15 +188,16 @@ func (c *Conference) CreateProtocol(conference *entity.Conference) error {
 			}
 
 			if participant.Email != "" {
-				fmt.Println("ASCEND email", participant.Email)
 				sendTo = append(sendTo, participant.Email)
 			}
 			return true
 		},
 	)
 
-	fmt.Println("AFTER", sendTo)
-	if err := c.reps.CreateProtocol(conference.ID, sendTo); err != nil {
+	if err := c.reps.CreateProtocol(context.TODO(), &stapler.ProtocolRequest{
+		ConferenceID: conference.ID,
+		To:           sendTo,
+	}); err != nil {
 		logrus.Error(err)
 		return err
 	}

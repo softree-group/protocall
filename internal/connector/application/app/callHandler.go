@@ -1,9 +1,9 @@
 package app
 
 import (
-	"protocall/application/applications"
-	"protocall/domain/repository"
+	"protocall/internal/connector/application/applications"
 	"protocall/internal/connector/config"
+	"protocall/internal/connector/domain/repository"
 
 	"github.com/spf13/viper"
 

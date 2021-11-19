@@ -1,9 +1,9 @@
 package memory
 
 import (
-	"protocall/domain/entity"
-	"protocall/domain/repository"
-	"protocall/internal/config"
+	"protocall/internal/connector/config"
+	"protocall/internal/connector/domain/entity"
+	"protocall/internal/connector/domain/repository"
 	"sync"
 
 	"github.com/google/btree"

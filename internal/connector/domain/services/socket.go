@@ -1,6 +1,6 @@
 package services
 
-import "protocall/domain/entity"
+import "protocall/internal/connector/domain/entity"
 
 type Socket interface {
 	Publish(channel string, data entity.SocketMessage) error

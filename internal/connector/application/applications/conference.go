@@ -1,8 +1,6 @@
 package applications
 
-import (
-	"protocall/domain/entity"
-)
+import "protocall/internal/connector/domain/entity"
 
 type Conference interface {
 	StartConference(user *entity.User) (*entity.Conference, error)

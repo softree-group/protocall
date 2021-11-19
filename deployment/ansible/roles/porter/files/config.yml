@@ -1,7 +1,7 @@
-porter:
-  host: "pbx.softex-team.ru"
+server:
+  host: "0.0.0.0"
   port: "8888"
-  root: "/var/spool/asterisk/recording"
+root: "/var/spool/asterisk/recording"
 s3:
   bucket: "protocall-storage"
-  endpoint: "protocall-storage.fra1.digitaloceanspaces.com"
+  endpoint: "fra1.digitaloceanspaces.com"

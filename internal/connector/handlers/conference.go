@@ -3,11 +3,13 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+
+	"protocall/internal/connector/application"
+	"protocall/internal/connector/domain/entity"
+
 	"github.com/google/btree"
 	"github.com/sirupsen/logrus"
 	"github.com/valyala/fasthttp"
-	"protocall/application"
-	"protocall/domain/entity"
 )
 
 func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {

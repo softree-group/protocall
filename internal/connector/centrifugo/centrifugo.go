@@ -1,10 +1,11 @@
-package connector
+package centrifugo
 
 import (
 	"encoding/json"
-	"protocall/domain/entity"
-	"protocall/domain/services"
-	"protocall/internal/config"
+
+	"protocall/internal/connector/config"
+	"protocall/internal/connector/domain/entity"
+	"protocall/internal/connector/domain/services"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"

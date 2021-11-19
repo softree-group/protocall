@@ -1,6 +1,6 @@
 package memory
 
-import "protocall/domain/repository"
+import "protocall/internal/connector/domain/repository"
 
 type Bridge struct {
 	bridgeID string

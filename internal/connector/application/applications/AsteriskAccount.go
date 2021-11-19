@@ -1,6 +1,6 @@
 package applications
 
-import "protocall/domain/entity"
+import "protocall/internal/connector/domain/entity"
 
 type AsteriskAccount interface {
 	GetFree() *entity.AsteriskAccount

@@ -11,9 +11,9 @@ import (
 
 func main() {
 	cfg := parseConfig()
-	logger.NewLogger(cfg.Logger)
+	logger.NewLogger(&cfg.Logger)
 
-	storage, err := s3.NewStorage(cfg.Storage)
+	storage, err := s3.NewStorage(&cfg.Storage)
 	if err != nil {
 		log.Fatalf("cannot connect to s3: %v", err)
 	}
@@ -21,7 +21,8 @@ func main() {
 	mux := &http.ServeMux{}
 	initRouter(mux, &porterHandler{storage, cfg.Root})
 
-	if err = web.NewServer(cfg.Server, mux).Start(); err != nil {
+	logger.L.Infof("Starting server on %v:%v", cfg.Server.Host, cfg.Server.Port)
+	if err = web.NewServer(mux, &cfg.Server).Start(); err != nil {
 		log.Fatalf("server error: %v", err)
 	}
 }

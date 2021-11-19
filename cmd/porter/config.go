@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
 
@@ -14,10 +13,10 @@ import (
 )
 
 type config struct {
-	Server  *web.ServerConfig    `yaml:"server"`
-	Storage *s3.StorageConfig    `yaml:"s3"`
-	Logger  *logger.LoggerConfig `yaml:"log"`
-	Root    string               `yaml:"root"`
+	Server  web.ServerConfig    `yaml:"server"`
+	Storage s3.StorageConfig    `yaml:"s3"`
+	Logger  logger.LoggerConfig `yaml:"log"`
+	Root    string              `yaml:"root"`
 }
 
 var (
@@ -27,9 +26,8 @@ var (
 func parseConfig() *config {
 	flag.Parse()
 	if *configPath == "" {
-		fmt.Println("need to specify path to config")
 		flag.Usage()
-		os.Exit(1)
+		log.Fatalf("need to specify path to config")
 	}
 
 	data, err := os.ReadFile(*configPath)
@@ -42,6 +40,6 @@ func parseConfig() *config {
 		log.Fatalf("cannot parse configuration: %v", err)
 	}
 
-	s3.ApplySecrets(config.Storage)
+	s3.ApplySecrets(&config.Storage)
 	return config
 }

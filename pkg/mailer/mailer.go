@@ -29,7 +29,7 @@ func (m *Mailer) Send(ctx context.Context, mimeType, subject, body string, to ..
 		newMsg.SetBody(mimeType, body)
 
 		if err := m.client.DialAndSend(); err != nil {
-			logger.L.Error("error while render template for user: ", user)
+			logger.L.Error("error while sending email for user: ", user, err)
 			continue
 		}
 	}

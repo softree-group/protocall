@@ -6,8 +6,8 @@ func defaults() {
 	ariDefaults()
 	logDefaults()
 	serverDefaults()
-	translatorDefaults()
-	uploaderDefaults()
+	porterDefaults()
+	clerkDefaults()
 }
 
 func ariDefaults() {
@@ -33,10 +33,10 @@ func serverDefaults() {
 	viper.SetDefault(Participant, 32) //nolint:gomnd
 }
 
-func uploaderDefaults() {
-	viper.SetDefault(UploaderTimeout, 3) //nolint:gomnd
+func porterDefaults() {
+	viper.SetDefault(PorterTimeout, 3) //nolint:gomnd
 }
 
-func translatorDefaults() {
-	viper.SetDefault(TranslatorTimeout, 3) //nolint:gomnd
+func clerkDefaults() {
+	viper.SetDefault(ClerkTimeout, 3) //nolint:gomnd
 }
