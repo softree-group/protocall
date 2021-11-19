@@ -1,6 +1,7 @@
 package infrastructure
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -18,31 +19,36 @@ type PorterClientConfig struct {
 }
 
 type PorterClient struct {
-	httpClient *http.Client
-	addr       string
+	*http.Client
+	addr string
 }
 
-func NewUploader(config *PorterClientConfig) *PorterClient {
-	return &PorterClient{
-		httpClient: &http.Client{
-			Timeout: time.Second * time.Duration(config.Timeout),
-		},
+func NewPorterClient(config *PorterClientConfig) *PorterClient {
+	t := &PorterClient{
 		addr: fmt.Sprintf("http://%v:%v", config.Host, config.Port),
 	}
+	t.Timeout = time.Duration(config.Timeout) * time.Second
+	return t
 }
 
-func (u *PorterClient) UploadConference(path string) error {
-	resp, err := u.httpClient.Post(
+func (p *PorterClient) UploadConference(ctx context.Context, path string) error {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
 		fmt.Sprintf("%v/upload?from=%v&to=%v",
-			u.addr,
+			p.addr,
 			path,
 			path,
 		),
-		"",
 		nil,
 	)
 	if err != nil {
-		return errUploadFile
+		return err
+	}
+
+	resp, err := p.Do(req)
+	if err != nil {
+		return err
 	}
 	defer resp.Body.Close()
 

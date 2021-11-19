@@ -2,8 +2,15 @@ package main
 
 import (
 	"context"
-	"protocall/internal/clerk/translator"
+	"net/http"
+
+	"protocall/internal/stapler"
+	"protocall/internal/stapler/notifier"
+	"protocall/internal/translator"
+	"protocall/pkg/logger"
+	"protocall/pkg/mailer"
 	"protocall/pkg/recognizer"
+	"protocall/pkg/s3"
 	"protocall/pkg/web"
 )
 
@@ -23,21 +30,28 @@ func main() {
 		logger.L.Fatalf("did not connect to recognizer: %v", err)
 	}
 
-	if err := server.NewServer(
-		cfg.Server,
-		clerk.NewRouter(clerk.Handler{
-			.NewSender(mailer.NewMailer(cfg.Mailer)),
-			application.NewStapler(storage),
-			application.NewTranslator(rec, storage)
-		})
+	mux := &http.ServeMux{}
+	translator.InitRouter(
+		mux,
+		&translator.TranslatorHandler{
+			App: translator.NewTranslator(rec, storage),
+		},
+	)
+	stapler.InitRouter(
+		mux,
+		&stapler.StaplerHandler{
+			App: stapler.NewStapler(
+				storage,
+				notifier.NewNotifier(
+					mailer.NewMailer(
+						cfg.Mailer,
+					),
+				),
+			),
+		},
 	)
 
-	if err := web.NewServer(
-		cfg.Server,
-		clerk.NewRouter(clerk.ClerkHandler{
-			Translator: translator.NewTranslator()
-		})
-	).Start(); err != nil {
+	if err := web.NewServer(cfg.Server, mux).Start(); err != nil {
 		logger.L.Fatalf("error while running server: %v", err)
 	}
 }

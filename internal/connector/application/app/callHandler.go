@@ -1,10 +1,11 @@
 package app
 
 import (
-	"github.com/spf13/viper"
 	"protocall/application/applications"
 	"protocall/domain/repository"
-	"protocall/internal/config"
+	"protocall/internal/connector/config"
+
+	"github.com/spf13/viper"
 
 	"github.com/CyCoreSystems/ari/v5"
 	"github.com/sirupsen/logrus"

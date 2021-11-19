@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+
 	"protocall/application/applications"
 	"protocall/domain/entity"
-	"protocall/domain/repository"
+	"protocall/internal/connector/domain/repository"
 
 	"github.com/sirupsen/logrus"
 )

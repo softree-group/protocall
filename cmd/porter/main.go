@@ -2,8 +2,8 @@ package main
 
 import (
 	"log"
+	"net/http"
 
-	"protocall/internal/porter"
 	"protocall/pkg/logger"
 	"protocall/pkg/s3"
 	"protocall/pkg/web"
@@ -18,12 +18,10 @@ func main() {
 		log.Fatalf("cannot connect to s3: %v", err)
 	}
 
-	srv := web.NewServer(cfg.Server, porter.NewRouter(&porter.PorterHandler{
-		Storage: storage,
-		Root:    cfg.Root,
-	}))
+	mux := &http.ServeMux{}
+	initRouter(mux, &porterHandler{storage, cfg.Root})
 
-	if err = srv.Start(); err != nil {
+	if err = web.NewServer(cfg.Server, mux).Start(); err != nil {
 		log.Fatalf("server error: %v", err)
 	}
 }

@@ -2,6 +2,7 @@ package clerk
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,51 +11,49 @@ import (
 
 	"protocall/internal/clerk/stapler"
 	"protocall/internal/clerk/translator"
-	"protocall/internal/connector/domain/entity"
 )
 
 var (
 	errTranslate = errors.New("error while send request to clerk")
 )
 
-type TranslatorConfig struct {
+type ClerkClientConfig struct {
 	Host    string
 	Port    string
 	Timeout int
 }
 
-type Translator struct {
-	c    *http.Client
+type ClerkClient struct {
+	http.Client
+
 	addr string
 }
 
-func NewTranslator(config *TranslatorConfig) *Translator {
-	return &Translator{
-		c: &http.Client{
-			Timeout: time.Second * time.Duration(config.Timeout),
-		},
+func NewTranslator(config *ClerkClientConfig) *ClerkClient {
+	t := &ClerkClient{
 		addr: fmt.Sprintf("http://%v:%v", config.Host, config.Port),
 	}
+	t.Timeout = time.Duration(config.Timeout) * time.Second
+	return t
 }
 
-func (t *Translator) TranslateConference(u *entity.User, c *entity.Conference) error {
-	body, err := json.Marshal(translator.TranslateRequest{
-		StartTime: c.Start,
-		User: translator.User{
-			Username: u.Username,
-			Email:    u.Email,
-			Path:     u.RecordPath,
-		},
-	})
+func (c *ClerkClient) TranslateConference(ctx context.Context, data *translator.TranslateRequest) error {
+	body, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
 
-	resp, err := t.c.Post(
-		fmt.Sprintf("%v/records", t.addr),
-		"application/json",
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		fmt.Sprintf("%v/records", c.addr),
 		bytes.NewReader(body),
 	)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.Do(req)
 	if err != nil {
 		return err
 	}
@@ -67,21 +66,23 @@ func (t *Translator) TranslateConference(u *entity.User, c *entity.Conference) e
 	return nil
 }
 
-func (t *Translator) CreateProtocol(conferenceID string, sendTo []string) error {
-	fmt.Println("EMAILS", sendTo)
-	body, err := json.Marshal(stapler.SendProtocolRequest{
-		ConferenceID: conferenceID,
-		To:           sendTo,
-	})
+func (c *ClerkClient) CreateProtocol(ctx context.Context, data *stapler.ProtocolRequest) error {
+	body, err := json.Marshal(data)
 	if err != nil {
 		return err
 	}
 
-	resp, err := t.c.Post(
-		fmt.Sprintf("%v/protocols", t.addr),
-		"application/json",
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		fmt.Sprintf("%v/protocols", c.addr),
 		bytes.NewReader(body),
 	)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.Do(req)
 	if err != nil {
 		return err
 	}

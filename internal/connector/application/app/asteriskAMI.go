@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"log"
-	"protocall/domain/entity"
 	"sync"
+
+	"protocall/domain/entity"
 
 	"github.com/heltonmarx/goami/ami"
 )

@@ -4,26 +4,12 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"time"
 
 	"protocall/pkg/logger"
 )
 
-type TranslateRequest struct {
-	StartTime time.Time `json:"start" binding:"required"`
-	User      struct {
-		Username string `json:"username" binding:"required"`
-		Email    string `json:"email"`
-		Path     string `json:"path" binding:"required"`
-	} `json:"user" binding:"required"`
-}
-
-type TranslatorRepository interface {
-	Translate(*TranslateRequest)
-}
-
 type TranslatorHandler struct {
-	app TranslatorRepository
+	App *Translator
 }
 
 func (t *TranslatorHandler) Translate(res http.ResponseWriter, req *http.Request) {
@@ -41,7 +27,7 @@ func (t *TranslatorHandler) Translate(res http.ResponseWriter, req *http.Request
 		return
 	}
 
-	t.app.Translate(&translateRequest)
+	t.App.Translate(&translateRequest)
 
 	res.WriteHeader(http.StatusNoContent)
 }
