@@ -1,16 +1,15 @@
 package main
 
 import (
-	"protocall/application"
-	"protocall/infrastructure"
-	"protocall/interfaces/handlers"
-	"protocall/internal/config"
+	"protocall/internal/connector/application"
+	"protocall/internal/connector/config"
+	"protocall/internal/connector/handlers"
 )
 
 func main() {
 	config.InitConfig()
 
-	app := application.New(infrastructure.New())
+	app := application.New(handlers.NewHandler())
 
 	go handlers.ServeAPI(app)
 	go app.Snoopy.Snoop()

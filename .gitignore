@@ -1,8 +1,35 @@
-deploy.sh
-accounts.json
-config.yaml
 .idea
 .env
 .DS_Store
-configs
-**/*-secret.yml
+
+# configs
+accounts.json
+clerk.yml
+connector.yml
+centrifugo.json
+nginx.conf
+
+# front
+static
+
+# go dependencies
+vendor
+
+# docker
+docker-config.json
+
+# terraform
+**/*.tfstate
+**/*.tfstate.*
+**/.terraform/*
+**/.terraformrc
+**/terraform.rc
+
+# kubernetes config
+kube.yml
+
+# ansible
+inventory.toml
+
+# certs
+certs

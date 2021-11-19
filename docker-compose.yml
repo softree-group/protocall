@@ -1,0 +1,53 @@
+version: '3.9'
+services:
+  connector:
+    build:
+      dockerfile: build/connector.Dockerfile
+      args:
+        - IMAGE=connector
+    image: connector
+    command: ["-s", "/app/config.yml"]
+    volumes:
+      - ${PWD}/accounts.json:/app/accounts.json
+      - ${PWD}/connector.yml:/app/config.yml
+
+    networks:
+      - protocall
+  clerk:
+    build:
+      dockerfile: build/clerk.Dockerfile
+      args:
+       - IMAGE=clerk
+    image: clerk
+    command: ["-f", "/app/clerk.yml"]
+    environment:
+      - ACCESS_KEY
+      - SECRET_KEY
+      - EMAIL_KEY
+    volumes:
+      - ${PWD}/clerk.yml:/app/clerk.yml
+    ports:
+      - 127.0.0.1:8080:80
+    networks:
+      - protocall
+  frontend:
+    image: nginx:latest
+    volumes:
+      - ${PWD}/certs:/certs
+      - ${PWD}/static:/var/www/html
+      - ${PWD}/nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - 127.0.0.1:443:443
+    networks:
+      - protocall
+    depends_on:
+      - connector
+  centrifugo:
+    image: centrifugo/centrifugo
+    command: ["centrifugo", "-c", "/centrifugo.json"]
+    networks:
+      - protocall
+    volumes:
+      - ${PWD}/centrifugo.json:/centrifugo.json
+networks:
+  protocall:
