@@ -23,13 +23,13 @@ const (
 	ServerDomain = "server.domain"
 	Participant  = "server.participant"
 
-	UploaderHost    = "uploader.host"
-	UploaderPort    = "uploader.port"
-	UploaderTimeout = "uplodaer.timeout"
+	PorterHost    = "porter.host"
+	PorterPort    = "porter.port"
+	PorterTimeout = "porter.timeout"
 
-	TranslatorHost    = "translator.host"
-	TranslatorPort    = "translator.port"
-	TranslatorTimeout = "translator.timeout"
+	ClerkHost    = "clerk.host"
+	ClerkPort    = "clerk.port"
+	ClerkTimeout = "clerk.timeout"
 
 	CentrifugoToken  = "centrifugo.token"
 	CentrifugoAPIKey = "centrifugo.api_key"

@@ -12,13 +12,10 @@
     dest: "{{item.dest}}"
   loop: "{{configs}}"
 
-- name: Enable porter service
+- name: Reload porter service
   ansible.builtin.systemd:
     name: "{{service_name}}"
     enabled: yes
     masked: no
-
-- name: Restart porter service
-  ansible.builtin.systemd:
-    name: "{{service_name}}"
-    state: reloaded
+    daemon_reload: yes
+    state: restarted

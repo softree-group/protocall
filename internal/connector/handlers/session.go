@@ -2,15 +2,16 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/golang-jwt/jwt"
-	"github.com/sirupsen/logrus"
 	"net/http"
-	"protocall/application"
-	"protocall/domain/entity"
-	"protocall/internal/config"
 	"time"
 
+	"protocall/internal/connector/application"
+	"protocall/internal/connector/config"
+	"protocall/internal/connector/domain/entity"
+
+	"github.com/golang-jwt/jwt"
 	"github.com/hashicorp/go-uuid"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/valyala/fasthttp"
 )

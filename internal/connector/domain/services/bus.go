@@ -1,11 +1,8 @@
 package services
 
-type Subscriber interface {
-	Cancel()
-	Channel() chan interface{}
-}
+import "protocall/pkg/bus"
 
 type Bus interface {
-	Subscribe(event string) Subscriber
+	Subscribe(event string) *bus.Subscriber
 	Publish(event string, data interface{})
 }

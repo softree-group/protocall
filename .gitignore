@@ -1,24 +1,35 @@
-deploy.sh
-accounts.json
-config.yaml
 .idea
 .env
 .DS_Store
 
-vendor/
+# configs
+accounts.json
+clerk.yml
+connector.yml
+centrifugo.json
+nginx.conf
 
+# front
+static
+
+# go dependencies
+vendor
+
+# docker
 docker-config.json
 
-# tf
+# terraform
 **/*.tfstate
 **/*.tfstate.*
 **/.terraform/*
 **/.terraformrc
 **/terraform.rc
 
-# k8s config
+# kubernetes config
 kube.yml
-*-values.yml
 
 # ansible
 inventory.toml
+
+# certs
+certs

@@ -16,25 +16,27 @@ import (
 
 func main() {
 	cfg := parseConfig()
-	logger.NewLogger(cfg.Logger)
+	logger.NewLogger(&cfg.Logger)
 
-	storage, err := s3.NewStorage(cfg.Storage)
+	storage, err := s3.NewStorage(&cfg.Storage)
 	if err != nil {
 		logger.L.Fatalf("did not connect to s3: %v", err)
 	}
 
 	ctx := context.Background()
 
-	rec, err := recognizer.NewRecognizer(ctx, cfg.Recognizer)
+	rec, err := recognizer.NewRecognizer(ctx, &cfg.Recognizer)
 	if err != nil {
 		logger.L.Fatalf("did not connect to recognizer: %v", err)
 	}
+
+	tApp := translator.NewTranslator(rec, storage)
 
 	mux := &http.ServeMux{}
 	translator.InitRouter(
 		mux,
 		&translator.TranslatorHandler{
-			App: translator.NewTranslator(rec, storage),
+			App: tApp,
 		},
 	)
 	stapler.InitRouter(
@@ -44,14 +46,16 @@ func main() {
 				storage,
 				notifier.NewNotifier(
 					mailer.NewMailer(
-						cfg.Mailer,
+						&cfg.Mailer,
 					),
 				),
+				tApp,
 			),
 		},
 	)
 
-	if err := web.NewServer(cfg.Server, mux).Start(); err != nil {
+	logger.L.Infof("Starting server on %v:%v", cfg.Server.Host, cfg.Server.Port)
+	if err := web.NewServer(mux, &cfg.Server).Start(); err != nil {
 		logger.L.Fatalf("error while running server: %v", err)
 	}
 }

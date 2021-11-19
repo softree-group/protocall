@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"protocall/internal/config"
+	"protocall/internal/connector/config"
 
 	"github.com/CyCoreSystems/ari/v5"
 	"github.com/sirupsen/logrus"

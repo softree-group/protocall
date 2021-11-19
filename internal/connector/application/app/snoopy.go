@@ -2,8 +2,9 @@ package app
 
 import (
 	"context"
-	"protocall/domain/services"
-	"protocall/internal/config"
+
+	"protocall/internal/connector/config"
+	"protocall/internal/connector/domain/services"
 
 	"github.com/CyCoreSystems/ari/v5"
 	"github.com/CyCoreSystems/ari/v5/client/native"
@@ -62,6 +63,7 @@ func (s *Snoopy) channelHandler(channel *ari.ChannelHandle, recordPath string, s
 				logrus.Error("fail to save result record for channel ", channel.ID(), ". Error: ", err)
 				return
 			}
+			s.bus.Publish("saved/"+sessionID, recordPath)
 			logrus.Info("saved record for ", channel.ID())
 
 			return

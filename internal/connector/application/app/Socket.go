@@ -1,9 +1,9 @@
 package app
 
 import (
-	"protocall/application/applications"
-	"protocall/domain/entity"
-	"protocall/domain/services"
+	"protocall/internal/connector/application/applications"
+	"protocall/internal/connector/domain/entity"
+	"protocall/internal/connector/domain/services"
 )
 
 type Socket struct {

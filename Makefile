@@ -1,4 +1,4 @@
-VERSION := 0.1.0
+VERSION := 0.1.1
 REGISTRY := ghcr.io/softree-group/protocall-connector
 
 all: clerk connector

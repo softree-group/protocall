@@ -1,8 +1,9 @@
 package applications
 
 import (
+	"protocall/internal/connector/domain/entity"
+
 	"github.com/CyCoreSystems/ari/v5"
-	"protocall/domain/entity"
 )
 
 type Connector interface {

@@ -21,15 +21,21 @@ type Notifier interface {
 	Notify(context.Context, []Phrase, ...string)
 }
 
-type Stapler struct {
-	storage  Storage
-	notifier Notifier
+type JobStatus interface {
+	Watch(confID string) <-chan struct{}
 }
 
-func NewStapler(s Storage, n Notifier) *Stapler {
+type Stapler struct {
+	storage     Storage
+	notifier    Notifier
+	translation JobStatus
+}
+
+func NewStapler(s Storage, n Notifier, translation JobStatus) *Stapler {
 	return &Stapler{
-		storage:  s,
-		notifier: n,
+		storage:     s,
+		notifier:    n,
+		translation: translation,
 	}
 }
 
@@ -73,32 +79,18 @@ func (s *Stapler) collect(ctx context.Context, req *ProtocolRequest) ([]Phrase, 
 	return res, nil
 }
 
-const (
-	retry = 3
-	after = 10 * time.Second
-)
+func (s *Stapler) Protocol(ctx context.Context, req *ProtocolRequest) error {
+	finish := s.translation.Watch(req.ConferenceID)
+	if finish != nil {
+		<-finish
+	}
 
-func (s *Stapler) Protocol(req *ProtocolRequest) {
-	go func() {
-		var (
-			phrases []Phrase
-			err     error
-		)
+	phrases, err := s.collect(ctx, req)
+	if err != nil {
+		return err
+	}
 
-		ctx := context.Background()
-
-		for i := 0; i < retry; i++ {
-			phrases, err = s.collect(ctx, req)
-			if err != nil {
-				time.Sleep(after)
-			}
-		}
-		if err != nil {
-			logger.L.Error("error while collecting records", err)
-			return
-		}
-
-		s.notifier.Notify(ctx, phrases, req.To...)
-		logger.L.Info("successfully send protocol for conference: ", req.ConferenceID)
-	}()
+	s.notifier.Notify(ctx, phrases, req.To...)
+	logger.L.Info("successfully send protocol for conference: ", req.ConferenceID)
+	return nil
 }

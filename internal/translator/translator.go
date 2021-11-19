@@ -28,12 +28,14 @@ type Storage interface {
 type Translator struct {
 	storage    Storage
 	recognizer Recognizer
+	jobs       *jobs
 }
 
 func NewTranslator(r Recognizer, s Storage) *Translator {
 	return &Translator{
 		storage:    s,
 		recognizer: r,
+		jobs:       newJobs(),
 	}
 }
 
@@ -74,10 +76,17 @@ func (t *Translator) processAudio(ctx context.Context, req *TranslateRequest) er
 
 func (t *Translator) Translate(req *TranslateRequest) {
 	go func() {
+		t.jobs.create(req.ConferenceID)
+		defer t.jobs.resolve(req.ConferenceID)
+
 		if err := t.processAudio(context.Background(), req); err != nil {
 			logger.L.Error("error while process record: ", req.User.Path)
 			return
 		}
 		logger.L.Info("Translation done ", req.User.Path)
 	}()
+}
+
+func (t *Translator) Watch(confID string) <-chan struct{} {
+	return t.jobs.watch(confID)
 }

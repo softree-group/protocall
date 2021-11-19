@@ -22,11 +22,16 @@ func (s *StaplerHandler) Protocol(res http.ResponseWriter, req *http.Request) {
 
 	sendRequest := ProtocolRequest{}
 	if err := json.Unmarshal(body, &sendRequest); err != nil {
-		logger.L.Error(err)
+		logger.L.Errorln("error while collecting records", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	s.App.Protocol(&sendRequest)
+
+	if err := s.App.Protocol(req.Context(), &sendRequest); err != nil {
+		logger.L.Error(err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	res.WriteHeader(http.StatusNoContent)
 }

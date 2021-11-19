@@ -7,5 +7,5 @@ import (
 )
 
 func InitRouter(mux *http.ServeMux, h *TranslatorHandler) {
-	mux.HandleFunc("/records", web.ApplyMethods(h.Translate, "POST"))
+	mux.HandleFunc("/translations", web.ApplyMethods(h.Translate, "POST"))
 }

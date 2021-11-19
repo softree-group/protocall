@@ -2,13 +2,14 @@ package application
 
 import (
 	"context"
-	"protocall/application/app"
-	"protocall/application/applications"
-	"protocall/domain/repository"
-	"protocall/domain/services"
-	"protocall/infrastructure"
-	"protocall/infrastructure/bus"
-	"protocall/internal/config"
+
+	"protocall/internal/connector/application/app"
+	"protocall/internal/connector/application/applications"
+	"protocall/internal/connector/centrifugo"
+	"protocall/internal/connector/config"
+	"protocall/internal/connector/domain/repository"
+	"protocall/internal/connector/domain/services"
+	"protocall/pkg/bus"
 
 	"github.com/CyCoreSystems/ari/v5/client/native"
 	"github.com/sirupsen/logrus"
@@ -41,20 +42,20 @@ func New(reps repository.Repositories) *Applications {
 		logrus.Fatal("cannot connect to asterisk: ", err)
 	}
 
-	socketService := infrastructure.NewCentrifugo()
+	socketService := centrifugo.NewCentrifugo()
 	socketApp := app.NewSocket(socketService)
 
 	connector := app.NewConnector(ariClient, reps)
 
+	busService := bus.New()
+
 	userApp := app.NewUser(reps)
-	conferenceApp := app.NewConference(reps, ariClient)
+	conferenceApp := app.NewConference(reps, ariClient, busService)
 	asteriskApp := app.NewAsteriskAccount(reps, viper.GetString(config.ARIAccountsFile))
 	ami, err := app.NewAMIAsterisk(context.Background(), viper.GetString(config.AMIHost)+":"+viper.GetString(config.AMIPort), viper.GetString(config.AMIUser), viper.GetString(config.AMIPassword))
 	if err != nil {
 		logrus.Fatal("Fail connect to ami: ", err)
 	}
-
-	busService := bus.New()
 
 	return &Applications{
 		Listener:        app.NewListener(reps, ariClient, app.NewHandler(ariClient, reps, connector), userApp, conferenceApp, asteriskApp, socketApp),

@@ -5,8 +5,8 @@
   roles:
     - porter
 
-- name: Deploy recognizer
-  hosts: recognizer
-  become: true
-  roles:
-    - recognizer
+# - name: Deploy recognizer
+#   hosts: recognizer
+#   become: true
+#   roles:
+#     - recognizer

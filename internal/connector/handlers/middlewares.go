@@ -3,7 +3,7 @@ package handlers
 import (
 	"strings"
 
-	"protocall/internal/config"
+	"protocall/internal/connector/config"
 
 	"github.com/lab259/cors"
 	"github.com/sirupsen/logrus"
