@@ -17,14 +17,6 @@ const (
 	expire     = time.Second * 24 * 60 * 60
 )
 
-type StorageConfig struct {
-	UseSSL    bool   `yaml:"useSSL"`
-	Bucket    string `yaml:"bucket"`
-	Endpoint  string `yaml:"endpoint"`
-	AccessKey string
-	SecretKey string
-}
-
 type S3 struct {
 	client *minio.Client
 	bucket string

@@ -3,11 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"protocall/pkg/logger"
-	"protocall/pkg/mailer"
-	"protocall/pkg/recognizer"
 	"protocall/pkg/s3"
 	"protocall/pkg/web"
 
@@ -15,11 +14,10 @@ import (
 )
 
 type config struct {
-	Server     *web.ServerConfig            `yaml:"server"`
-	Logger     *logger.LoggerConfig         `yaml:"log"`
-	Recognizer *recognizer.RecognizerConfig `yaml:"recognizer"`
-	Storage    *s3.StorageConfig            `yaml:"s3"`
-	Mailer     *mailer.MailerConfig         `yaml:"smtp"`
+	Server  *web.ServerConfig    `yaml:"server"`
+	Storage *s3.StorageConfig    `yaml:"s3"`
+	Logger  *logger.LoggerConfig `yaml:"log"`
+	Root    string               `yaml:"root"`
 }
 
 var (
@@ -33,19 +31,17 @@ func parseConfig() *config {
 		flag.Usage()
 		os.Exit(1)
 	}
+
 	data, err := os.ReadFile(*configPath)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatalf("cannot read configuration: %v", err)
 	}
 
 	config := &config{}
 	if err = yaml.Unmarshal(data, config); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatalf("cannot parse configuration: %v", err)
 	}
 
 	s3.ApplySecrets(config.Storage)
-	mailer.ApplySecrets(config.Mailer)
 	return config
 }

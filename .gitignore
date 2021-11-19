@@ -5,6 +5,8 @@ config.yaml
 .env
 .DS_Store
 
+vendor/
+
 docker-config.json
 
 # tf
