@@ -1,6 +1,9 @@
 .idea
 .env
 .DS_Store
+deploy.sh
+connector
+config.yaml
 
 # configs
 accounts.json
