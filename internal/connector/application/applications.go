@@ -58,7 +58,7 @@ func New(reps repository.Repositories) *Applications {
 	}
 
 	return &Applications{
-		Listener:        app.NewListener(reps, ariClient, app.NewHandler(ariClient, reps, connector), userApp, conferenceApp, asteriskApp, socketApp),
+		Listener:        app.NewListener(reps, ariClient, app.NewHandler(ariClient, reps, connector), userApp, conferenceApp, asteriskApp, socketApp, busService),
 		Snoopy:          app.NewSnoopy(busService),
 		Conference:      conferenceApp,
 		AsteriskAccount: asteriskApp,
