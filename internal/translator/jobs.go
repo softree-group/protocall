@@ -1,6 +1,9 @@
 package translator
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 type jobs struct {
 	sync.Mutex
@@ -13,7 +16,7 @@ func newJobs() *jobs {
 	}
 }
 
-func (j *jobs) watch(confID string) <-chan struct{} {
+func (j *jobs) watch(confID []string) <-chan struct{} {
 	j.Lock()
 	defer j.Unlock()
 
@@ -25,28 +28,29 @@ func (j *jobs) watch(confID string) <-chan struct{} {
 	return trigger
 }
 
-func (j *jobs) create(confID string) {
+func (j *jobs) create(record string) {
 	j.Lock()
 	defer j.Unlock()
 
-	_, ok := j.events[confID]
+	_, ok := j.events[record]
 	if ok {
+		fmt.Println("found")
 		return
 	}
 
-	j.events[confID] = make(chan struct{})
+	j.events[record] = make(chan struct{})
 }
 
-func (j *jobs) resolve(confID string) {
+func (j *jobs) resolve(record string) {
 	j.Lock()
 	defer j.Unlock()
 
-	trigger, ok := j.events[confID]
+	trigger, ok := j.events[record]
 	if !ok {
 		return
 	}
 
 	trigger <- struct{}{}
 	close(trigger)
-	delete(j.events, confID)
+	delete(j.events, record)
 }

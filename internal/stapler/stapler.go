@@ -3,6 +3,7 @@ package stapler
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -22,7 +23,7 @@ type Notifier interface {
 }
 
 type JobStatus interface {
-	Watch(confID string) <-chan struct{}
+	Watch(...string) <-chan struct{}
 }
 
 type Stapler struct {
@@ -40,18 +41,17 @@ func NewStapler(s Storage, n Notifier, translation JobStatus) *Stapler {
 }
 
 func (s *Stapler) collect(ctx context.Context, req *ProtocolRequest) ([]Phrase, error) {
-	var lines string
-	for file := range s.storage.ListObjects(ctx, req.ConferenceID) {
-		if strings.Contains(file.Key, ".wav") {
-			raw, err := s.storage.GetFile(ctx, strings.Replace(file.Key, ".wav", ".txt", 1))
-			if err != nil {
-				return nil, err
-			}
-			lines += string(raw)
+	var data string
+	for _, record := range req.Records {
+		raw, err := s.storage.GetFile(ctx, record)
+		if err != nil {
+			return nil, err
 		}
+		data += string(raw)
+
 	}
 
-	scanner := bufio.NewScanner(strings.NewReader(lines))
+	scanner := bufio.NewScanner(strings.NewReader(data))
 	scanner.Split(bufio.ScanLines)
 	res := []Phrase{}
 	for scanner.Scan() {
@@ -62,7 +62,7 @@ func (s *Stapler) collect(ctx context.Context, req *ProtocolRequest) ([]Phrase, 
 
 		time, err := time.Parse(time.RFC3339, line[0])
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("invalid timestamp ", err)
 		}
 
 		res = append(res, Phrase{
@@ -80,9 +80,9 @@ func (s *Stapler) collect(ctx context.Context, req *ProtocolRequest) ([]Phrase, 
 }
 
 func (s *Stapler) Protocol(ctx context.Context, req *ProtocolRequest) error {
-	finish := s.translation.Watch(req.ConferenceID)
-	if finish != nil {
-		<-finish
+	finish := s.translation.Watch(req.Records...)
+	if _, ok := <-finish; !ok {
+		return errors.New("")
 	}
 
 	phrases, err := s.collect(ctx, req)
@@ -91,6 +91,6 @@ func (s *Stapler) Protocol(ctx context.Context, req *ProtocolRequest) error {
 	}
 
 	s.notifier.Notify(ctx, phrases, req.To...)
-	logger.L.Info("successfully send protocol for conference: ", req.ConferenceID)
+	logger.L.Info("successfully send protocol")
 	return nil
 }

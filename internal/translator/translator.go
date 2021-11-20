@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strings"
 	"time"
 
 	"protocall/pkg/logger"
@@ -39,24 +38,25 @@ func NewTranslator(r Recognizer, s Storage) *Translator {
 	}
 }
 
-func phrase(req *TranslateRequest, resp *TranslateRespone) string {
-	if resp.Text == "" {
-		return ""
-	}
-	return fmt.Sprintf(
-		"%v:%v:%v\n",
-		req.StartTime.Add(time.Duration(resp.Result[0].Start*float64(time.Second))),
-		req.User.Username,
-		resp.Text,
-	)
-}
-
 func (t *Translator) processAudio(ctx context.Context, req *TranslateRequest) error {
-	audio, err := t.storage.GetObject(ctx, req.User.Path)
+	audio, err := t.storage.GetObject(ctx, req.User.Record)
 	if err != nil {
 		return err
 	}
 	defer audio.Close()
+
+	phrase := func(req *TranslateRequest, resp *TranslateRespone) string {
+		if resp.Text == "" {
+			return ""
+		}
+
+		return fmt.Sprintf(
+			"%v:%v:%v\n",
+			req.Start.Add(time.Duration(resp.Result[0].Start*float64(time.Second))),
+			req.User.Username,
+			resp.Text,
+		)
+	}
 
 	w := bytes.NewBuffer([]byte{})
 	for text := range t.recognizer.Recognize(ctx, audio) {
@@ -65,7 +65,7 @@ func (t *Translator) processAudio(ctx context.Context, req *TranslateRequest) er
 
 	if err := t.storage.PutObject(
 		ctx,
-		strings.Replace(req.User.Path, ".wav", ".txt", 1),
+		req.User.Record,
 		bytes.NewReader(w.Bytes()),
 	); err != nil {
 		return fmt.Errorf("%w: %v", errGetObject, err)
@@ -76,17 +76,17 @@ func (t *Translator) processAudio(ctx context.Context, req *TranslateRequest) er
 
 func (t *Translator) Translate(req *TranslateRequest) {
 	go func() {
-		t.jobs.create(req.ConferenceID)
-		defer t.jobs.resolve(req.ConferenceID)
+		t.jobs.create(req.User.Record)
+		defer t.jobs.resolve(req.User.Record)
 
 		if err := t.processAudio(context.Background(), req); err != nil {
-			logger.L.Error("error while process record: ", req.User.Path)
+			logger.L.Error("error while process record: ", req.User.Record)
 			return
 		}
-		logger.L.Info("Translation done ", req.User.Path)
+		logger.L.Info("Translation done ", req.User.Record)
 	}()
 }
 
-func (t *Translator) Watch(confID string) <-chan struct{} {
-	return t.jobs.watch(confID)
+func (t *Translator) Watch(record ...string) <-chan struct{} {
+	return t.jobs.watch(record)
 }
