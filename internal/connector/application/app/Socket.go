@@ -44,11 +44,11 @@ func (s Socket) publishConferenceEventWithUserData(event string, user *entity.Us
 		return err
 	}
 
-	return s.socketService.Publish("conference~"+user.ConferenceID, data)
+	return s.socketService.Publish("conference:"+user.ConferenceID, data)
 }
 
 func (s Socket) publishConferenceEvent(event, conferenceID string) error {
-	return s.socketService.Publish("conference~"+conferenceID, entity.SocketMessage{
+	return s.socketService.Publish("conference:"+conferenceID, entity.SocketMessage{
 		"event": event,
 	})
 }
