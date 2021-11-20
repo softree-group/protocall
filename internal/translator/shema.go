@@ -7,7 +7,6 @@ import (
 
 type User struct {
 	Username string `json:"username" binding:"required"`
-	Email    string `json:"email"`
 	Path     string `json:"path" binding:"required"`
 }
 
