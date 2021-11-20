@@ -3,7 +3,6 @@ package stapler
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -19,31 +18,31 @@ type Storage interface {
 }
 
 type Notifier interface {
-	Notify(context.Context, []Phrase, ...string)
+	Send(context.Context, []Phrase, []User)
 }
 
-type JobStatus interface {
-	Watch(...string) <-chan struct{}
+type Translator interface {
+	Wait([]string) <-chan struct{}
 }
 
 type Stapler struct {
-	storage     Storage
-	notifier    Notifier
-	translation JobStatus
+	storage    Storage
+	notifier   Notifier
+	translator Translator
 }
 
-func NewStapler(s Storage, n Notifier, translation JobStatus) *Stapler {
+func NewStapler(storage Storage, notifier Notifier, translator Translator) *Stapler {
 	return &Stapler{
-		storage:     s,
-		notifier:    n,
-		translation: translation,
+		storage:    storage,
+		notifier:   notifier,
+		translator: translator,
 	}
 }
 
-func (s *Stapler) collect(ctx context.Context, req *ProtocolRequest) ([]Phrase, error) {
+func (s *Stapler) collect(ctx context.Context, users []User) ([]Phrase, error) {
 	var data string
-	for _, record := range req.Records {
-		raw, err := s.storage.GetFile(ctx, record)
+	for _, user := range users {
+		raw, err := s.storage.GetFile(ctx, user.Text)
 		if err != nil {
 			return nil, err
 		}
@@ -62,7 +61,7 @@ func (s *Stapler) collect(ctx context.Context, req *ProtocolRequest) ([]Phrase, 
 
 		time, err := time.Parse(time.RFC3339, line[0])
 		if err != nil {
-			return nil, fmt.Errorf("invalid timestamp ", err)
+			return nil, fmt.Errorf("invalid timestamp: %w", err)
 		}
 
 		res = append(res, Phrase{
@@ -80,17 +79,20 @@ func (s *Stapler) collect(ctx context.Context, req *ProtocolRequest) ([]Phrase, 
 }
 
 func (s *Stapler) Protocol(ctx context.Context, req *ProtocolRequest) error {
-	finish := s.translation.Watch(req.Records...)
-	if _, ok := <-finish; !ok {
-		return errors.New("")
-	}
+	<-s.translator.Wait(func() []string {
+		records := make([]string, len(req.Users))
+		for _, user := range req.Users {
+			records = append(records, user.Record)
+		}
+		return records
+	}())
 
-	phrases, err := s.collect(ctx, req)
+	protocol, err := s.collect(ctx, req.Users)
 	if err != nil {
 		return err
 	}
 
-	s.notifier.Notify(ctx, phrases, req.To...)
+	s.notifier.Send(ctx, protocol, req.Users)
 	logger.L.Info("successfully send protocol")
 	return nil
 }

@@ -11,20 +11,18 @@ type Runner interface {
 }
 
 type Notifier struct {
-	runners []Runner
+	mail Runner
 }
 
-func NewNotifier(runners ...Runner) *Notifier {
-	return &Notifier{runners: runners}
+func NewNotifier(mail Runner) *Notifier {
+	return &Notifier{mail: mail}
 }
 
-func (n *Notifier) Notify(ctx context.Context, phrases []stapler.Phrase, to ...string) {
-	for _, runner := range n.runners {
-		for _, user := range to {
-			err := runner.Send(ctx, "text/html", subject, render(phrases), user)
-			if err != nil {
-				logger.L.Errorln(err)
-			}
+func (n *Notifier) Send(ctx context.Context, protocol []stapler.Phrase, users []stapler.User) {
+	for _, user := range users {
+		err := n.mail.Send(ctx, "text/html", subject, render(protocol), user.Email)
+		if err != nil {
+			logger.L.Errorln(err)
 		}
 	}
 }

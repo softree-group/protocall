@@ -172,6 +172,14 @@ func (c *Conference) TranslateRecord(user *entity.User, conference *entity.Confe
 	return nil
 }
 
+func (c *Conference) UploadRecordJob(user *entity.User, meetID string) {
+	go func() {
+		if err := c.UploadRecord(user, meetID); err != nil {
+			logrus.Error(err)
+		}
+	}()
+}
+
 func (c *Conference) UploadRecord(user *entity.User, meetID string) error {
 	data := <-c.bus.Subscribe("/saved" + user.SessionID).Channel()
 	path, ok := data.(string)

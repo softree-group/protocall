@@ -8,6 +8,7 @@ type Conference interface {
 	IsExist(meetID string) bool
 	StartRecord(user *entity.User, meetID string) error
 	UploadRecord(user *entity.User, meetID string) error
+	UploadRecordJob(user *entity.User, meetID string)
 	TranslateRecord(user *entity.User, conference *entity.Conference) error
 	CreateProtocol(conference *entity.Conference) error
 	Get(meetID string) *entity.Conference

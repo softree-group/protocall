@@ -27,14 +27,14 @@ type Storage interface {
 type Translator struct {
 	storage    Storage
 	recognizer Recognizer
-	jobs       *jobs
+	job       *job
 }
 
 func NewTranslator(r Recognizer, s Storage) *Translator {
 	return &Translator{
 		storage:    s,
 		recognizer: r,
-		jobs:       newJobs(),
+		job:       newJob(),
 	}
 }
 
@@ -65,7 +65,7 @@ func (t *Translator) processAudio(ctx context.Context, req *TranslateRequest) er
 
 	if err := t.storage.PutObject(
 		ctx,
-		req.User.Record,
+		req.User.Text,
 		bytes.NewReader(w.Bytes()),
 	); err != nil {
 		return fmt.Errorf("%w: %v", errGetObject, err)
@@ -76,17 +76,18 @@ func (t *Translator) processAudio(ctx context.Context, req *TranslateRequest) er
 
 func (t *Translator) Translate(req *TranslateRequest) {
 	go func() {
-		t.jobs.create(req.User.Record)
-		defer t.jobs.resolve(req.User.Record)
+		t.job.create(req.User.Record)
+		defer t.job.resolve(req.User.Record)
 
 		if err := t.processAudio(context.Background(), req); err != nil {
 			logger.L.Error("error while process record: ", req.User.Record)
 			return
 		}
-		logger.L.Info("Translation done ", req.User.Record)
+		logger.L.Info("Translation done: ", req.User.Text)
 	}()
 }
 
-func (t *Translator) Watch(record ...string) <-chan struct{} {
-	return t.jobs.watch(record)
+// Track translation jobs and send signal, when all jobs are done.
+func (t *Translator) Wait(records []string) <-chan struct{} {
+	return t.job.wait(records)
 }

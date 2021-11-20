@@ -44,11 +44,7 @@ func main() {
 		&stapler.StaplerHandler{
 			App: stapler.NewStapler(
 				storage,
-				notifier.NewNotifier(
-					mailer.NewMailer(
-						&cfg.Mailer,
-					),
-				),
+				notifier.NewNotifier(mailer.NewMailer(&cfg.Mailer)),
 				tApp,
 			),
 		},

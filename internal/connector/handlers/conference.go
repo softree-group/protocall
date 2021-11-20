@@ -106,7 +106,7 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		return
 	}
 
-	_ = apps.Socket.PublishLeaveEvent(user)
+	apps.Socket.PublishLeaveEvent(user)
 
 	if user.Channel != nil {
 		err := apps.AMI.KickUser(context.Background(), user)
@@ -123,14 +123,13 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 
 	conference := apps.Conference.Get(user.ConferenceID)
 
+	if conference.IsRecording {
+		apps.Conference.UploadRecordJob(user, user.ConferenceID)
+	}
+
 	apps.Bus.Publish("leave/"+user.SessionID, "")
 
 	if conference.IsRecording {
-		if err := apps.Conference.UploadRecord(user, user.ConferenceID); err != nil {
-			ctx.SetStatusCode(fasthttp.StatusInternalServerError)
-			return
-		}
-
 		if err := apps.Conference.TranslateRecord(user, conference); err != nil {
 			ctx.SetStatusCode(fasthttp.StatusInternalServerError)
 			return
