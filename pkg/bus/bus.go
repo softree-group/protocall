@@ -1,6 +1,8 @@
 package bus
 
 import (
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"sync"
 )
 
@@ -20,9 +22,9 @@ func (b Bus) Subscribe(event string) *Subscriber {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 
-	sub := &Subscriber{C: make(chan interface{}), clear: func() {
+	sub := &Subscriber{event: event, C: make(chan interface{}), clear: func() {
 		b.clear(event)
-	}}
+	}, uid: uuid.NewString()}
 	subs := b.subscribers[event]
 	b.subscribers[event] = append(subs, sub)
 
@@ -34,11 +36,11 @@ func (b Bus) Publish(event string, data interface{}) {
 	defer b.lock.RUnlock()
 
 	subs := b.subscribers[event]
-	if len(subs) == 0 {
-		return
-	}
 
+	logrus.Info("PUBLISH ", event)
+	logrus.Infof("PUBLISH SUBS: %+v", subs)
 	for _, sub := range subs {
+		logrus.Info("PUBLISH sub", event, " ", sub.uid)
 		if sub.C == nil {
 			continue
 		}
@@ -47,10 +49,12 @@ func (b Bus) Publish(event string, data interface{}) {
 }
 
 func (b *Bus) clear(event string) {
+	logrus.Info("clear ", event)
 	b.lock.Lock()
 	defer b.lock.Unlock()
 
 	subs := b.subscribers[event]
+	logrus.Infof("SUBS: %+v",  subs)
 	if len(subs) == 0 {
 		return
 	}
@@ -69,6 +73,8 @@ func (b *Bus) clear(event string) {
 	}
 
 	b.subscribers[event] = notNilSubs
+
+	logrus.Infof("AFTER CLEAR SUBS: %+v",  b.subscribers[event])
 }
 
 var _ *Bus = &Bus{}

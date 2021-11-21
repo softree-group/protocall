@@ -7,7 +7,6 @@ import (
 	"protocall/internal/connector/domain/entity"
 	"protocall/internal/connector/domain/services"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/valyala/fasthttp"
 )
@@ -36,7 +35,6 @@ func (c Centrifugo) Publish(channel string, payload entity.SocketMessage) error 
 	}
 
 	data, err := json.Marshal(publish)
-	logrus.Debugf("socket: %s", data)
 	if err != nil {
 		return err
 	}

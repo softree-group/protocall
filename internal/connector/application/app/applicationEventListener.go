@@ -41,6 +41,8 @@ func (a *ApplicationEventListener) handleStartRecordEvent(event interface{}) {
 		logrus.Error("StartRecord event invalid event type")
 		return
 	}
+	logrus.WithField("user", data.User.SessionID).Debug("handle start record")
+
 	user := a.reps.FindUser(data.User.SessionID)
 	if user == nil {
 		logrus.Error("no user in handle startRecord event")
@@ -59,6 +61,8 @@ func (a *ApplicationEventListener) handleSavedEvent(event interface{}) {
 		logrus.Error("Saved event invalid event type")
 		return
 	}
+	logrus.WithField("user", data.User.SessionID).Debug("handle saved")
+
 	user := a.reps.FindUser(data.User.SessionID)
 	if user == nil {
 		logrus.Error("no user in handle saved event")
@@ -84,6 +88,7 @@ func (a *ApplicationEventListener) handleUploadedEvent(event interface{}) {
 		logrus.Error("uploaded event invalid event type")
 		return
 	}
+	logrus.WithField("user", data.User.SessionID).Debug("handle uploaded")
 
 	err := a.conferenceApp.TranslateRecord(data.User, data.RecName)
 	if err != nil {
@@ -99,6 +104,8 @@ func (a *ApplicationEventListener) handleTranslatedEvent(event interface{}) {
 		logrus.Error("Translated event invalid event type")
 		return
 	}
+	logrus.WithField("user", data.User.SessionID).Debug("handle translated")
+
 	a.reps.DoneJob(data.ConferenceID, data.RecName)
 
 	if isDone, _ := a.reps.IsDone(data.ConferenceID); isDone {
@@ -112,6 +119,7 @@ func (a *ApplicationEventListener) handleConferenceTranslatedEvent(event interfa
 		logrus.Error("Conference translated event invalid event type")
 		return
 	}
+	logrus.WithField("user", data.User.SessionID).Debug("handle conference translated")
 
 	conference := a.reps.GetConference(data.ConferenceID)
 	err := a.conferenceApp.CreateProtocol(conference)
@@ -142,7 +150,7 @@ func (a *ApplicationEventListener) handleFailEvent(event interface{}) {
 		logrus.Error("Translated event invalid event type")
 		return
 	}
-	logrus.Errorln("error while process events")
+	logrus.WithField("user", data.User.SessionID).Debug("handle fail")
 
 	a.reps.DoneJob(data.ConferenceID, data.RecName)
 	a.reps.DeleteUser(data.User.SessionID)
@@ -154,7 +162,7 @@ func (a *ApplicationEventListener) handleLeaveUser(event interface{}) {
 		logrus.Error("Translated event invalid event type")
 		return
 	}
-	logrus.Errorln("error while process events")
+	logrus.WithField("user", data.User.SessionID).Debug("handle leave")
 
 	conf := a.reps.GetConference(data.ConferenceID)
 
@@ -179,7 +187,10 @@ func (a *ApplicationEventListener) handleLeaveUser(event interface{}) {
 			logrus.Error("fail to kick all users: ", err)
 		}
 		a.socket.PublishEndConference(data.ConferenceID)
+		return
 	}
+
+	a.bus.Publish("leave/"+data.User.SessionID, "")
 }
 
 func (a *ApplicationEventListener) Listen() {
@@ -194,19 +205,19 @@ func (a *ApplicationEventListener) Listen() {
 	for {
 		select {
 		case event := <-startRecordEvent.Channel():
-			a.handleStartRecordEvent(event)
+			go a.handleStartRecordEvent(event)
 		case event := <-savedEvent.Channel():
-			a.handleSavedEvent(event)
+			go a.handleSavedEvent(event)
 		case event := <-uploadedEvent.Channel():
-			a.handleUploadedEvent(event)
+			go a.handleUploadedEvent(event)
 		case event := <-translatedEvent.Channel():
-			a.handleTranslatedEvent(event)
+			go a.handleTranslatedEvent(event)
 		case event := <-conferenceTranslatedEvent.Channel():
-			a.handleConferenceTranslatedEvent(event)
+			go a.handleConferenceTranslatedEvent(event)
 		case event := <-failEvent.Channel():
-			a.handleFailEvent(event)
+			go a.handleFailEvent(event)
 		case event := <-deleteEvent.Channel():
-			a.handleLeaveUser(event)
+			go a.handleLeaveUser(event)
 		}
 	}
 }

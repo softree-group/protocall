@@ -39,7 +39,6 @@ func NewSnoopy(bus services.Bus) *Snoopy {
 
 func (s *Snoopy) channelHandler(channel *ari.ChannelHandle, recordPath string, sessionID string) {
 	sub := channel.Subscribe(ari.Events.All)
-	logrus.Debug("Record Path: ", recordPath)
 	leave := s.bus.Subscribe("leave/" + sessionID)
 
 	defer sub.Cancel()

@@ -43,7 +43,6 @@ func NewListener(reps repository.Repositories,
 
 func (e *EventListener) Listen() {
 	logrus.Info("Start listen...")
-	any := e.ari.Bus().Subscribe(nil, ari.Events.All)
 	stasis := e.ari.Bus().Subscribe(nil, ari.Events.StasisStart)
 	leftBridge := e.ari.Bus().Subscribe(nil, ari.Events.ChannelLeftBridge)
 
@@ -51,16 +50,13 @@ func (e *EventListener) Listen() {
 		select {
 		case event := <-stasis.Events():
 			data := event.(*ari.StasisStart)
-			logrus.Info("new stasis", data)
 			channel := e.ari.Channel().Get(ari.NewKey(ari.ChannelKey, data.Channel.ID))
-			logrus.Info("Channel: ", channel.ID())
 			channelData, err := channel.Data()
 			if err != nil {
 				logrus.Error("Fail to read data")
 				channel.Hangup()
 				continue
 			}
-			logrus.Info("Display name: ", channelData.Caller.Name)
 			sessionID := e.account.Who(channelData.Caller.Number)
 			if sessionID == "" {
 				logrus.Warn("Free account ", channelData.Caller.Number)
@@ -119,8 +115,6 @@ func (e *EventListener) Listen() {
 			if err != nil {
 				logrus.Error("fail to send socket message: ", err)
 			}
-		case event := <-any.Events():
-			logrus.Info("Event type: ", event.GetType())
 		case event := <-leftBridge.Events():
 			value := event.(*ari.ChannelLeftBridge)
 			logrus.Info("Bridge ID: ", value.Bridge.ID)

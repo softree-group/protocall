@@ -116,7 +116,6 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 
 	apps.AsteriskAccount.Free(user.AsteriskAccount)
 
-	apps.Bus.Publish("leave/"+user.SessionID, "")
 	apps.Bus.Publish("leave", entity.EventDefault{
 		ConferenceID: user.ConferenceID,
 		User:         user,

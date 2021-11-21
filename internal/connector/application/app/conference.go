@@ -94,7 +94,6 @@ func postSnoop(id, snoopID, appArgs, app, spy, whisper string) (*fasthttp.Respon
 "appArgs":  "%s"}`, snoopID, app, spy, whisper, appArgs))
 	req.Header.SetContentType("application/json")
 	err := clientt.Do(req, resp)
-	logrus.Info("REQ: ", req.String())
 	if err != nil {
 		logrus.Errorf("Сетевая ошибка по пути")
 		return resp, err

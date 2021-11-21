@@ -1,11 +1,16 @@
 package bus
 
+import "github.com/sirupsen/logrus"
+
 type Subscriber struct {
 	C     chan interface{}
 	clear func()
+	event string
+	uid string
 }
 
 func (s *Subscriber) Cancel() {
+	logrus.Warn("CANCEL ", s.event, " ", s.uid)
 	close(s.C)
 	s.C = nil
 
