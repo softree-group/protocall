@@ -26,6 +26,7 @@ type Applications struct {
 	AMI             *app.AMIAsterisk
 	Socket          applications.Socket
 	Bus             services.Bus
+	ApplicationEventListener applications.EventListener
 }
 
 func New(reps repository.Repositories) *Applications {
@@ -57,6 +58,8 @@ func New(reps repository.Repositories) *Applications {
 		logrus.Fatal("Fail connect to ami: ", err)
 	}
 
+	applicationListener := app.NewApplicationEventListener(reps, busService, conferenceApp)
+
 	return &Applications{
 		Listener:        app.NewListener(reps, ariClient, app.NewHandler(ariClient, reps, connector), userApp, conferenceApp, asteriskApp, socketApp, busService),
 		Snoopy:          app.NewSnoopy(busService),
@@ -67,5 +70,6 @@ func New(reps repository.Repositories) *Applications {
 		AMI:             ami,
 		Socket:          socketApp,
 		Bus:             busService,
+		ApplicationEventListener: applicationListener,
 	}
 }

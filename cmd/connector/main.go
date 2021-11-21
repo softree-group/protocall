@@ -13,5 +13,6 @@ func main() {
 
 	go handlers.ServeAPI(app)
 	go app.Snoopy.Snoop()
+	go app.ApplicationEventListener.Listen()
 	app.Listener.Listen()
 }

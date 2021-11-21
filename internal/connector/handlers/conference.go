@@ -123,10 +123,6 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 
 	conference := apps.Conference.Get(user.ConferenceID)
 
-	if conference.IsRecording {
-		apps.Conference.UploadRecordJob(user, user.ConferenceID)
-	}
-
 	apps.Bus.Publish("leave/"+user.SessionID, "")
 
 	if conference.IsRecording {
