@@ -152,7 +152,6 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 			}
 			apps.Bus.Publish("leave/"+participant.SessionID, "")
 			apps.AsteriskAccount.Free(participant.AsteriskAccount)
-			apps.User.Delete(participant.SessionID)
 			return true
 		})
 
@@ -161,7 +160,6 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 			logrus.Error("fail to kick all users: ", err)
 		}
 		_ = apps.Socket.PublishEndConference(user.ConferenceID)
-		apps.Conference.Delete(user.ConferenceID)
 	}
 }
 

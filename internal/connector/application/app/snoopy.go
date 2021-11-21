@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"protocall/internal/connector/domain/entity"
 
 	"protocall/internal/connector/config"
 	"protocall/internal/connector/domain/services"
@@ -63,7 +64,12 @@ func (s *Snoopy) channelHandler(channel *ari.ChannelHandle, recordPath string, s
 				logrus.Error("fail to save result record for channel ", channel.ID(), ". Error: ", err)
 				return
 			}
-			s.bus.Publish("saved/"+sessionID, recordPath)
+			s.bus.Publish("saved", entity.EventDefault{
+				RecName:      recordPath,
+				User:         &entity.User{
+					SessionID:       sessionID,
+				},
+			})
 			logrus.Info("saved record for ", channel.ID())
 
 			return
