@@ -14,6 +14,7 @@ type Handler struct {
 	*memory.AsteriskAccountMemory
 	*memory.UserMemory
 	*memory.ConferenceMemory
+	*memory.ConferenceJobs
 	*porter.PorterClient
 	*clerk.ClerkClient
 }
@@ -24,6 +25,7 @@ func NewHandler() *Handler {
 		memory.NewAsteriskAccount(),
 		memory.NewUser(),
 		memory.NewConference(),
+		memory.NewConferenceJobs(),
 		porter.NewPorterClient(&porter.PorterClientConfig{
 			Host:    viper.GetString(config.PorterHost),
 			Port:    viper.GetString(config.PorterPort),

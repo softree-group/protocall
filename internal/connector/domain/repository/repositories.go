@@ -7,4 +7,5 @@ type Repositories interface {
 	Conference
 	ConferenceStorage
 	ConferenceTranslator
+	ConferenceJobs
 }

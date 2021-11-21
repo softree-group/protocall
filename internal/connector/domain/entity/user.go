@@ -2,6 +2,7 @@ package entity
 
 import (
 	"encoding/json"
+
 	"github.com/CyCoreSystems/ari/v5"
 	"github.com/google/btree"
 )
@@ -13,8 +14,9 @@ type User struct {
 	AsteriskAccount string   `json:"id"`
 	Channel         *ari.Key `json:"-"`
 	ConferenceID    string   `json:"conference_id"`
-	RecordPath      string
-	NeedProtocol    bool `json:"need_protocol"`
+	NeedProtocol    bool     `json:"need_protocol"`
+	Records         []string
+	Texts           []string
 }
 
 func (u *User) Less(then btree.Item) bool {

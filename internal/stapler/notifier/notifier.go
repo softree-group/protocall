@@ -3,22 +3,28 @@ package notifier
 import (
 	"context"
 	"protocall/internal/stapler"
+	"protocall/pkg/logger"
 )
 
 type Runner interface {
-	Send(context.Context, string, string, string, ...string)
+	Send(context.Context, string, string, string, string) error
 }
 
 type Notifier struct {
-	runner []Runner
+	mail Runner
 }
 
-func NewNotifier(runners ...Runner) *Notifier {
-	return &Notifier{runner: runners}
+func NewNotifier(mail Runner) *Notifier {
+	return &Notifier{mail: mail}
 }
 
-func (n *Notifier) Notify(ctx context.Context, phrases []stapler.Phrase, to ...string) {
-	for _, el := range n.runner {
-		el.Send(ctx, "text/html", subject, render(phrases), to...)
+func (n *Notifier) Send(ctx context.Context, protocol []stapler.Phrase, users []stapler.User) {
+	for _, user := range users {
+		if user.NeedProtocol {
+			err := n.mail.Send(ctx, "text/html", subject, render(protocol), user.Email)
+			if err != nil {
+				logger.L.Errorln(err)
+			}
+		}
 	}
 }

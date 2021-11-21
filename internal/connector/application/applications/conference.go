@@ -7,8 +7,8 @@ type Conference interface {
 	JoinToConference(user *entity.User, meetID string) (*entity.Conference, error)
 	IsExist(meetID string) bool
 	StartRecord(user *entity.User, meetID string) error
-	UploadRecord(user *entity.User, meetID string) error
-	TranslateRecord(user *entity.User, conference *entity.Conference) error
+	UploadRecord(recordPath string) error
+	TranslateRecord(user *entity.User, recordPath string) error
 	CreateProtocol(conference *entity.Conference) error
 	Get(meetID string) *entity.Conference
 	StartRecordUser(user *entity.User, meetID string) error

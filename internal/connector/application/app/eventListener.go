@@ -4,6 +4,7 @@ import (
 	"protocall/internal/connector/application/applications"
 	"protocall/internal/connector/domain/entity"
 	"protocall/internal/connector/domain/repository"
+	"protocall/internal/connector/domain/services"
 
 	"github.com/CyCoreSystems/ari/v5"
 	"github.com/sirupsen/logrus"
@@ -17,6 +18,7 @@ type EventListener struct {
 	conference applications.Conference
 	account    applications.AsteriskAccount
 	socket     applications.Socket
+	bus services.Bus
 }
 
 func NewListener(reps repository.Repositories,
@@ -25,7 +27,8 @@ func NewListener(reps repository.Repositories,
 	user applications.User,
 	conference applications.Conference,
 	account applications.AsteriskAccount,
-	socket applications.Socket) *EventListener {
+	socket applications.Socket,
+	bus services.Bus) *EventListener {
 	return &EventListener{
 		handler:    handler,
 		ari:        client,
@@ -34,6 +37,7 @@ func NewListener(reps repository.Repositories,
 		conference: conference,
 		account:    account,
 		socket:     socket,
+		bus: bus,
 	}
 }
 
@@ -70,6 +74,10 @@ func (e *EventListener) Listen() {
 				e.user.Delete(sessionID)
 				channel.Hangup()
 				continue
+			}
+
+			if user.Channel != nil {
+				e.bus.Publish("leave/"+user.SessionID, "")
 			}
 
 			user.Channel = channel.Key()

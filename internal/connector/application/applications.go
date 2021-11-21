@@ -17,15 +17,16 @@ import (
 )
 
 type Applications struct {
-	Listener        applications.EventListener
-	Snoopy          applications.Snoopy
-	User            applications.User
-	AsteriskAccount applications.AsteriskAccount
-	Conference      applications.Conference
-	Connector       applications.Connector
-	AMI             *app.AMIAsterisk
-	Socket          applications.Socket
-	Bus             services.Bus
+	Listener                 applications.EventListener
+	Snoopy                   applications.Snoopy
+	User                     applications.User
+	AsteriskAccount          applications.AsteriskAccount
+	Conference               applications.Conference
+	Connector                applications.Connector
+	AMI                      *app.AMIAsterisk
+	Socket                   applications.Socket
+	Bus                      services.Bus
+	ApplicationEventListener applications.EventListener
 }
 
 func New(reps repository.Repositories) *Applications {
@@ -47,18 +48,27 @@ func New(reps repository.Repositories) *Applications {
 
 	connector := app.NewConnector(ariClient, reps)
 
+	busService := bus.New()
+
 	userApp := app.NewUser(reps)
-	conferenceApp := app.NewConference(reps, ariClient)
+	conferenceApp := app.NewConference(reps, ariClient, busService)
 	asteriskApp := app.NewAsteriskAccount(reps, viper.GetString(config.ARIAccountsFile))
 	ami, err := app.NewAMIAsterisk(context.Background(), viper.GetString(config.AMIHost)+":"+viper.GetString(config.AMIPort), viper.GetString(config.AMIUser), viper.GetString(config.AMIPassword))
 	if err != nil {
 		logrus.Fatal("Fail connect to ami: ", err)
 	}
 
-	busService := bus.New()
-
 	return &Applications{
-		Listener:        app.NewListener(reps, ariClient, app.NewHandler(ariClient, reps, connector), userApp, conferenceApp, asteriskApp, socketApp),
+		Listener: app.NewListener(
+			reps,
+			ariClient,
+			app.NewHandler(ariClient, reps, connector),
+			userApp,
+			conferenceApp,
+			asteriskApp,
+			socketApp,
+			busService,
+		),
 		Snoopy:          app.NewSnoopy(busService),
 		Conference:      conferenceApp,
 		AsteriskAccount: asteriskApp,
@@ -67,5 +77,12 @@ func New(reps repository.Repositories) *Applications {
 		AMI:             ami,
 		Socket:          socketApp,
 		Bus:             busService,
+		ApplicationEventListener: app.NewApplicationEventListener(
+			reps,
+			busService,
+			conferenceApp,
+			ami,
+			socketApp,
+		),
 	}
 }

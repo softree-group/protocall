@@ -40,14 +40,7 @@ func main() {
 	stapler.InitRouter(
 		mux,
 		&stapler.StaplerHandler{
-			App: stapler.NewStapler(
-				storage,
-				notifier.NewNotifier(
-					mailer.NewMailer(
-						&cfg.Mailer,
-					),
-				),
-			),
+			App: stapler.NewStapler(storage, notifier.NewNotifier(mailer.NewMailer(&cfg.Mailer))),
 		},
 	)
 

@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 
 	"protocall/internal/connector/application"
 	"protocall/internal/connector/domain/entity"
@@ -105,69 +106,23 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest)
 		return
 	}
-
-	_ = apps.Socket.PublishLeaveEvent(user)
+	apps.Socket.PublishLeaveEvent(user)
 
 	if user.Channel != nil {
-		err := apps.AMI.KickUser(context.Background(), user)
-		//err := apps.Connector.Disconnect(user.ConferenceID, user.Channel)
-		if err != nil {
+		if err := apps.AMI.KickUser(context.Background(), user); err != nil {
 			logrus.Error("Fail to disconnect: ", err)
 		}
 	}
 
 	apps.AsteriskAccount.Free(user.AsteriskAccount)
 
-	defer apps.User.Delete(user.SessionID)
-	defer ctx.Response.Header.DelCookie(sessionCookie)
-
-	conference := apps.Conference.Get(user.ConferenceID)
-
 	apps.Bus.Publish("leave/"+user.SessionID, "")
+	apps.Bus.Publish("leave", entity.EventDefault{
+		ConferenceID: user.ConferenceID,
+		User:         user,
+	})
 
-	if conference.IsRecording {
-		if err := apps.Conference.UploadRecord(user, user.ConferenceID); err != nil {
-			ctx.SetStatusCode(fasthttp.StatusInternalServerError)
-			return
-		}
-
-		if err := apps.Conference.TranslateRecord(user, conference); err != nil {
-			ctx.SetStatusCode(fasthttp.StatusInternalServerError)
-			return
-		}
-
-		if conference.HostUserID == user.AsteriskAccount {
-			if err := apps.Conference.CreateProtocol(conference); err != nil {
-				ctx.SetStatusCode(fasthttp.StatusInternalServerError)
-				return
-			}
-		}
-	}
-
-	conference.Participants.Delete(user)
-
-	if conference.HostUserID == user.AsteriskAccount {
-		conference.Participants.Ascend(func(item btree.Item) bool {
-			if item == nil {
-				return false
-			}
-			participant := item.(*entity.User)
-			if participant == nil {
-				return false
-			}
-			apps.Bus.Publish("leave/"+participant.SessionID, "")
-			apps.AsteriskAccount.Free(participant.AsteriskAccount)
-			apps.User.Delete(participant.SessionID)
-			return true
-		})
-
-		err := apps.AMI.KickAllFromConference(context.Background(), user.ConferenceID)
-		if err != nil {
-			logrus.Error("fail to kick all users: ", err)
-		}
-		_ = apps.Socket.PublishEndConference(user.ConferenceID)
-		apps.Conference.Delete(user.ConferenceID)
-	}
+	ctx.Response.Header.DelCookie(sessionCookie)
 }
 
 func record(ctx *fasthttp.RequestCtx, apps *application.Applications) {
@@ -184,7 +139,7 @@ func record(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		return
 	}
 
-	_ = apps.Socket.PublishStartRecordEvent(user.ConferenceID)
+	apps.Socket.PublishStartRecordEvent(user.ConferenceID)
 }
 
 type UserInfo struct {
@@ -252,4 +207,16 @@ func info(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	body, _ := json.Marshal(conferenceInfo)
 	ctx.SetBody(body)
 	ctx.SetContentType("application/json")
+}
+
+func translate(ctx *fasthttp.RequestCtx, apps *application.Applications) {
+	var sessionID string
+	err := json.Unmarshal(ctx.PostBody(), sessionID)
+	if err != nil {
+		logrus.Error(err.Error())
+		ctx.Error(err.Error(), http.StatusInternalServerError)
+	}
+
+	apps.Bus.Publish("/translated", apps.User.Find(sessionID))
+	ctx.Response.SetStatusCode(http.StatusNoContent)
 }

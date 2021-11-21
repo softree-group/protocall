@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"protocall/internal/connector/config"
+	"protocall/internal/connector/domain/entity"
 	"protocall/internal/connector/domain/services"
 
 	"github.com/CyCoreSystems/ari/v5"
@@ -38,17 +39,21 @@ func NewSnoopy(bus services.Bus) *Snoopy {
 
 func (s *Snoopy) channelHandler(channel *ari.ChannelHandle, recordPath string, sessionID string) {
 	sub := channel.Subscribe(ari.Events.All)
-	//end := channel.Subscribe(ari.Events.StasisEnd)
 	logrus.Debug("Record Path: ", recordPath)
 	leave := s.bus.Subscribe("leave/" + sessionID)
 
 	defer sub.Cancel()
-	//defer end.Cancel()
 	defer leave.Cancel()
 	defer channel.Hangup()
 
 	ctx := context.Background()
 	rec := record.Record(ctx, channel)
+	s.bus.Publish("startRecord", entity.EventDefault{
+		RecName: recordPath,
+		User: &entity.User{
+			SessionID: sessionID,
+		},
+	})
 
 	for {
 		select {
@@ -63,6 +68,13 @@ func (s *Snoopy) channelHandler(channel *ari.ChannelHandle, recordPath string, s
 				logrus.Error("fail to save result record for channel ", channel.ID(), ". Error: ", err)
 				return
 			}
+
+			s.bus.Publish("saved", entity.EventDefault{
+				RecName: recordPath,
+				User: &entity.User{
+					SessionID: sessionID,
+				},
+			})
 			logrus.Info("saved record for ", channel.ID())
 
 			return
