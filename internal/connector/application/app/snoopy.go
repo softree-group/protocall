@@ -50,6 +50,12 @@ func (s *Snoopy) channelHandler(channel *ari.ChannelHandle, recordPath string, s
 
 	ctx := context.Background()
 	rec := record.Record(ctx, channel)
+	s.bus.Publish("startRecord", entity.EventDefault{
+		RecName:      recordPath,
+		User:         &entity.User{
+			SessionID:       sessionID,
+		},
+	})
 
 	for {
 		select {
@@ -60,6 +66,7 @@ func (s *Snoopy) channelHandler(channel *ari.ChannelHandle, recordPath string, s
 			res := rec.Stop()
 
 			err := res.Save(recordPath)
+
 			if err != nil {
 				logrus.Error("fail to save result record for channel ", channel.ID(), ". Error: ", err)
 				return
