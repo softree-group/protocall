@@ -24,17 +24,20 @@ type Storage interface {
 	GetObject(context.Context, string) (io.ReadCloser, error)
 }
 
+type Connector interface {
+	TranslationDone(context.Context, *TranslateRequest) error
+}
+
 type Translator struct {
 	storage    Storage
 	recognizer Recognizer
-	job       *job
+	connector  Connector
 }
 
 func NewTranslator(r Recognizer, s Storage) *Translator {
 	return &Translator{
 		storage:    s,
 		recognizer: r,
-		job:       newJob(),
 	}
 }
 
@@ -52,7 +55,7 @@ func (t *Translator) processAudio(ctx context.Context, req *TranslateRequest) er
 
 		return fmt.Sprintf(
 			"%v:%v:%v\n",
-			req.Start.Add(time.Duration(resp.Result[0].Start*float64(time.Second))),
+			req.ConnectTime.Add(time.Duration(resp.Result[0].Start*float64(time.Second))),
 			req.User.Username,
 			resp.Text,
 		)
@@ -76,18 +79,14 @@ func (t *Translator) processAudio(ctx context.Context, req *TranslateRequest) er
 
 func (t *Translator) Translate(req *TranslateRequest) {
 	go func() {
-		t.job.create(req.User.Record)
-		defer t.job.resolve(req.User.Record)
-
 		if err := t.processAudio(context.Background(), req); err != nil {
 			logger.L.Error("error while process record: ", req.User.Record)
 			return
 		}
 		logger.L.Info("Translation done: ", req.User.Text)
+		if err := t.connector.TranslationDone(context.Background(), req); err != nil {
+			logger.L.Errorln("error while notify connector: ", err)
+		}
+		logger.L.Info("Connector successfully notified: ", req.User.SessionID)
 	}()
-}
-
-// Track translation jobs and send signal, when all jobs are done.
-func (t *Translator) Wait(records []string) <-chan struct{} {
-	return t.job.wait(records)
 }

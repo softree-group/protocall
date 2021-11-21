@@ -1,27 +1,39 @@
 package app
 
 import (
-	"github.com/sirupsen/logrus"
+	"context"
 	"protocall/internal/connector/application/applications"
 	"protocall/internal/connector/domain/entity"
 	"protocall/internal/connector/domain/repository"
 	"protocall/internal/connector/domain/services"
+
+	"github.com/google/btree"
+	"github.com/sirupsen/logrus"
 )
 
 type ApplicationEventListener struct {
-	reps repository.Repositories
-	bus  services.Bus
+	reps          repository.Repositories
+	bus           services.Bus
 	conferenceApp applications.Conference
+	ami           *AMIAsterisk
+	socket        *Socket
 }
 
-func NewApplicationEventListener(reps repository.Repositories, bus services.Bus, conference applications.Conference) *ApplicationEventListener {
+func NewApplicationEventListener(
+	reps repository.Repositories,
+	bus services.Bus,
+	conference applications.Conference,
+	ami *AMIAsterisk,
+	socket *Socket,
+) *ApplicationEventListener {
 	return &ApplicationEventListener{
 		reps:          reps,
 		bus:           bus,
 		conferenceApp: conference,
+		ami:           ami,
+		socket:        socket,
 	}
 }
-
 
 func (a *ApplicationEventListener) handleStartRecordEvent(event interface{}) {
 	data, ok := event.(entity.EventDefault)
@@ -57,7 +69,7 @@ func (a *ApplicationEventListener) handleSavedEvent(event interface{}) {
 	data.User = user
 	data.ConferenceID = user.ConferenceID
 
-	err := a.conferenceApp.UploadRecord(data.User, data.ConferenceID)
+	err := a.conferenceApp.UploadRecord(data.RecName)
 	if err != nil {
 		logrus.Error("fail to upload: ", err)
 		a.bus.Publish("fail", data)
@@ -73,8 +85,7 @@ func (a *ApplicationEventListener) handleUploadedEvent(event interface{}) {
 		return
 	}
 
-	conference := a.reps.GetConference(data.ConferenceID)
-	err := a.conferenceApp.TranslateRecord(data.User, conference)
+	err := a.conferenceApp.TranslateRecord(data.User, data.RecName)
 	if err != nil {
 		logrus.Error("fail to translate: ", err)
 		a.bus.Publish("fail", event)
@@ -108,14 +119,67 @@ func (a *ApplicationEventListener) handleConferenceTranslatedEvent(event interfa
 		logrus.Error("fail to create protocol: ", err)
 		a.bus.Publish("fail", event)
 	}
-	//TODO: delete users
-	//TODO: delete conference
+
+	conference.Participants.Ascend(func(i btree.Item) bool {
+		if i == nil {
+			return false
+		}
+
+		participant, ok := i.(*entity.User)
+		if !ok {
+			return false
+		}
+		a.reps.DeleteUser(participant.SessionID)
+		return true
+	})
+
+	a.reps.DeleteConference(data.ConferenceID)
 }
 
 func (a *ApplicationEventListener) handleFailEvent(event interface{}) {
-	//TODO: handle fail
-	//TODO: delete user
-	//TODO: delete conference?
+	data, ok := event.(entity.EventDefault)
+	if !ok {
+		logrus.Error("Translated event invalid event type")
+		return
+	}
+	logrus.Errorln("error while process events")
+
+	a.reps.DoneJob(data.ConferenceID, data.RecName)
+	a.reps.DeleteUser(data.User.SessionID)
+}
+
+func (a *ApplicationEventListener) handleLeaveUser(event interface{}) {
+	data, ok := event.(entity.EventDefault)
+	if !ok {
+		logrus.Error("Translated event invalid event type")
+		return
+	}
+	logrus.Errorln("error while process events")
+
+	conf := a.reps.GetConference(data.ConferenceID)
+
+	if conf.HostUserID == data.User.AsteriskAccount {
+		conf.Participants.Ascend(func(item btree.Item) bool {
+			if item == nil {
+				return false
+			}
+
+			participant := item.(*entity.User)
+			if participant == nil {
+				return false
+			}
+
+			a.bus.Publish("leave/"+participant.SessionID, "")
+			a.reps.FreeAccount(participant.AsteriskAccount)
+			return true
+		})
+
+		err := a.ami.KickAllFromConference(context.Background(), data.ConferenceID)
+		if err != nil {
+			logrus.Error("fail to kick all users: ", err)
+		}
+		a.socket.PublishEndConference(data.ConferenceID)
+	}
 }
 
 func (a *ApplicationEventListener) Listen() {
@@ -125,21 +189,24 @@ func (a *ApplicationEventListener) Listen() {
 	translatedEvent := a.bus.Subscribe("translated")
 	conferenceTranslatedEvent := a.bus.Subscribe("conferenceTranslated")
 	failEvent := a.bus.Subscribe("fail")
+	deleteEvent := a.bus.Subscribe("leave")
 
 	for {
 		select {
-		case event := <- startRecordEvent.Channel():
+		case event := <-startRecordEvent.Channel():
 			a.handleStartRecordEvent(event)
-		case event := <- savedEvent.Channel():
+		case event := <-savedEvent.Channel():
 			a.handleSavedEvent(event)
-		case event := <- uploadedEvent.Channel():
+		case event := <-uploadedEvent.Channel():
 			a.handleUploadedEvent(event)
-		case event := <- translatedEvent.Channel():
+		case event := <-translatedEvent.Channel():
 			a.handleTranslatedEvent(event)
-		case event := <- conferenceTranslatedEvent.Channel():
+		case event := <-conferenceTranslatedEvent.Channel():
 			a.handleConferenceTranslatedEvent(event)
-		case event := <- failEvent.Channel():
+		case event := <-failEvent.Channel():
 			a.handleFailEvent(event)
+		case event := <-deleteEvent.Channel():
+			a.handleLeaveUser(event)
 		}
 	}
 }

@@ -30,23 +30,17 @@ func main() {
 		logger.L.Fatalf("did not connect to recognizer: %v", err)
 	}
 
-	tApp := translator.NewTranslator(rec, storage)
-
 	mux := &http.ServeMux{}
 	translator.InitRouter(
 		mux,
 		&translator.TranslatorHandler{
-			App: tApp,
+			App: translator.NewTranslator(rec, storage),
 		},
 	)
 	stapler.InitRouter(
 		mux,
 		&stapler.StaplerHandler{
-			App: stapler.NewStapler(
-				storage,
-				notifier.NewNotifier(mailer.NewMailer(&cfg.Mailer)),
-				tApp,
-			),
+			App: stapler.NewStapler(storage, notifier.NewNotifier(mailer.NewMailer(&cfg.Mailer))),
 		},
 	)
 

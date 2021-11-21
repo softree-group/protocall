@@ -1,8 +1,9 @@
 package memory
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConferenceJobs(t *testing.T) {
@@ -14,7 +15,6 @@ func TestConferenceJobs(t *testing.T) {
 	assert.Nil(t, err)
 	err = store.Store("1", "rec3")
 	assert.Nil(t, err)
-
 
 	err = store.Store("2", "rec1")
 	assert.Nil(t, err)
@@ -31,7 +31,6 @@ func TestConferenceJobs(t *testing.T) {
 	isDone, err = store.IsDone("1")
 	assert.Nil(t, err)
 	assert.False(t, isDone)
-
 
 	err = store.DoneJob("1", "rec2")
 	assert.Nil(t, err)

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"protocall/internal/connector/application/applications"
@@ -104,12 +106,10 @@ func postSnoop(id, snoopID, appArgs, app, spy, whisper string) (*fasthttp.Respon
 }
 
 func (c *Conference) StartRecordUser(user *entity.User, conferenceID string) error {
-	user.RecordPath = fmt.Sprintf("%v/%v/%v.wav", conferenceID, user.Username, time.Now().UTC().Unix())
-
 	resp, err := postSnoop(
 		user.Channel.ID,
 		fmt.Sprintf("%s_%v_%s", conferenceID, time.Now().UTC().Unix(), user.Username),
-		user.RecordPath+","+user.SessionID,
+		fmt.Sprintf("%v/%v/%v.wav", conferenceID, user.Username, time.Now().UTC().Unix())+","+user.SessionID,
 		viper.GetString(config.ARISnoopyApplication),
 		"in",
 		"both",
@@ -157,13 +157,19 @@ func (c *Conference) Delete(meetID string) {
 	c.reps.DeleteConference(meetID)
 }
 
-func (c *Conference) TranslateRecord(user *entity.User, conference *entity.Conference) error {
+func (c *Conference) TranslateRecord(user *entity.User, recordPath string) error {
+	connTime, err := strconv.ParseInt(strings.Split(recordPath, "/")[0], 10, 64)
+	if err != nil {
+		return err
+	}
+
 	if err := c.reps.TranslateRecord(context.TODO(), &translator.TranslateRequest{
-		StartTime: conference.Start,
 		User: translator.User{
-			Username: user.Username,
-			Email:    user.Email,
-			Path:     user.RecordPath,
+			Username:    user.Username,
+			ConnectTime: time.Unix(connTime, 0),
+			SessionID:   user.SessionID,
+			Record:      recordPath,
+			Text:        strings.Replace(recordPath, ".wav", ".txt", -1),
 		},
 	}); err != nil {
 		logrus.Error(err)
@@ -172,35 +178,22 @@ func (c *Conference) TranslateRecord(user *entity.User, conference *entity.Confe
 	return nil
 }
 
-func (c *Conference) UploadRecordJob(user *entity.User, meetID string) {
-	go func() {
-		if err := c.UploadRecord(user, meetID); err != nil {
-			logrus.Error(err)
-		}
-	}()
-}
-
-func (c *Conference) UploadRecord(user *entity.User, meetID string) error {
-	data := <-c.bus.Subscribe("/saved" + user.SessionID).Channel()
-	path, ok := data.(string)
-	if !ok {
-		return errors.New("invalid data type from snoopy")
-	}
-
+func (c *Conference) UploadRecord(path string) error {
 	if err := c.reps.UploadRecord(context.TODO(), path); err != nil {
-		logrus.Error(err)
 		return err
 	}
 	return nil
 }
 
 func (c *Conference) CreateProtocol(conference *entity.Conference) error {
-	sendTo := []string{}
+	users := []stapler.User{}
 	conference.Participants.Ascend(
 		func(i btree.Item) bool {
 			if i == nil {
 				return false
 			}
+
+			user := stapler.User{}
 
 			participant, ok := i.(*entity.User)
 			if !ok {
@@ -208,16 +201,18 @@ func (c *Conference) CreateProtocol(conference *entity.Conference) error {
 			}
 
 			if participant.Email != "" {
-				sendTo = append(sendTo, participant.Email)
+				user.Email = participant.Email
 			}
+			user.Records = participant.Records
+			user.Texts = participant.Texts
+			user.Username = participant.Username
+
+			users = append(users, user)
 			return true
 		},
 	)
 
-	if err := c.reps.CreateProtocol(context.TODO(), &stapler.ProtocolRequest{
-		ConferenceID: conference.ID,
-		To:           sendTo,
-	}); err != nil {
+	if err := c.reps.CreateProtocol(context.TODO(), &stapler.ProtocolRequest{Users: users}); err != nil {
 		logrus.Error(err)
 		return err
 	}

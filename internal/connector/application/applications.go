@@ -17,15 +17,15 @@ import (
 )
 
 type Applications struct {
-	Listener        applications.EventListener
-	Snoopy          applications.Snoopy
-	User            applications.User
-	AsteriskAccount applications.AsteriskAccount
-	Conference      applications.Conference
-	Connector       applications.Connector
-	AMI             *app.AMIAsterisk
-	Socket          applications.Socket
-	Bus             services.Bus
+	Listener                 applications.EventListener
+	Snoopy                   applications.Snoopy
+	User                     applications.User
+	AsteriskAccount          applications.AsteriskAccount
+	Conference               applications.Conference
+	Connector                applications.Connector
+	AMI                      *app.AMIAsterisk
+	Socket                   applications.Socket
+	Bus                      services.Bus
 	ApplicationEventListener applications.EventListener
 }
 
@@ -58,10 +58,17 @@ func New(reps repository.Repositories) *Applications {
 		logrus.Fatal("Fail connect to ami: ", err)
 	}
 
-	applicationListener := app.NewApplicationEventListener(reps, busService, conferenceApp)
-
 	return &Applications{
-		Listener:        app.NewListener(reps, ariClient, app.NewHandler(ariClient, reps, connector), userApp, conferenceApp, asteriskApp, socketApp, busService),
+		Listener: app.NewListener(
+			reps,
+			ariClient,
+			app.NewHandler(ariClient, reps, connector),
+			userApp,
+			conferenceApp,
+			asteriskApp,
+			socketApp,
+			busService,
+		),
 		Snoopy:          app.NewSnoopy(busService),
 		Conference:      conferenceApp,
 		AsteriskAccount: asteriskApp,
@@ -70,6 +77,12 @@ func New(reps repository.Repositories) *Applications {
 		AMI:             ami,
 		Socket:          socketApp,
 		Bus:             busService,
-		ApplicationEventListener: applicationListener,
+		ApplicationEventListener: app.NewApplicationEventListener(
+			reps,
+			busService,
+			conferenceApp,
+			ami,
+			socketApp,
+		),
 	}
 }

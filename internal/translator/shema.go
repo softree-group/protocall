@@ -6,14 +6,15 @@ import (
 )
 
 type User struct {
-	Username string `json:"username" binding:"required"`
-	Record   string `json:"record" binding:"required"`
-	Text     string `json:"text" binding:"required"`
+	Username    string    `json:"username" binding:"required"`
+	ConnectTime time.Time `json:"join_time" binding:"required"`
+	SessionID   string    `json:"session_id binding:"required"`
+	Record      string    `json:"record" binding:"required"`
+	Text        string    `json:"text" binding:"required"`
 }
 
 type TranslateRequest struct {
-	Start time.Time `json:"start" binding:"required"`
-	User  User      `json:"user" binding:"required"`
+	User `json:"user" binding:"required"`
 }
 
 type TranslateRespone = recognizer.TextRespone
