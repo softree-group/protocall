@@ -19,27 +19,27 @@ func ServeAPI(apps *application.Applications) {
 		method func(string, fasthttp.RequestHandler),
 		path string,
 		handler func(ctx *fasthttp.RequestCtx, applications *application.Applications),
+		middleWare func (next fasthttp.RequestHandler) fasthttp.RequestHandler,
 	) {
-		method(
-			path,
-			func(ctx *fasthttp.RequestCtx) {
-				handler(ctx, apps)
-			},
-		)
+		if middleWare == nil {
+			middleWare = fishMiddleware
+		}
+
+		method(path, middleWare(func(ctx *fasthttp.RequestCtx) { handler(ctx, apps) }))
 	}
 
 	r.GET("/logs", authRequired(logutils.GetLogs))
 	r.POST("/logs/changeLevel", authRequired(logutils.ChangeLevel))
 	r.POST("/logs/reset", authRequired(logutils.ResetLogs))
 
-	compose(r.GET, "/session", session)
-	compose(r.POST, "/conference/start", start)
-	compose(r.POST, "/conference/{meetID}/join", join)
-	compose(r.POST, "/conference/record", record)
-	compose(r.POST, "/conference/leave", leave)
-	compose(r.POST, "/conference/ready", ready)
-	compose(r.GET, "/conference", info)
-	compose(r.POST, "/translates", translate)
+	compose(r.GET, "/session", session, nil)
+	compose(r.POST, "/conference/start", start, nil)
+	compose(r.POST, "/conference/{meetID}/join", join, nil)
+	compose(r.POST, "/conference/record", record, nil)
+	compose(r.POST, "/conference/leave", leave, nil)
+	compose(r.POST, "/conference/ready", ready, nil)
+	compose(r.GET, "/conference", info, nil)
+	compose(r.POST, "/translates", translate, authRequired)
 
 	startServer(r)
 }
