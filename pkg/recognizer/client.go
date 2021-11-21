@@ -72,22 +72,6 @@ const (
 func (r *Recognizer) Recognize(ctx context.Context, input io.Reader) <-chan TextRespone {
 	output := make(chan TextRespone)
 
-	readMessage := func() error {
-		_, data, err := r.conn.ReadMessage()
-		if err != nil {
-			return fmt.Errorf("%w: %v", errRecv, err)
-		}
-
-		content := TextRespone{}
-		if err := json.Unmarshal(data, &content); err != nil {
-			return err
-		}
-
-		output <- content
-
-		return nil
-	}
-
 	go func() {
 		if err := r.open(ctx); err != nil {
 			logger.L.Error(err)
@@ -116,14 +100,23 @@ func (r *Recognizer) Recognize(ctx context.Context, input io.Reader) <-chan Text
 				}
 
 				if err := r.conn.WriteMessage(websocket.BinaryMessage, buf); err != nil {
-					logger.L.Error(err)
+					logger.L.Errorln(err)
 					return
 				}
 
-				if err := readMessage(); err != nil {
-					logger.L.Error(err)
+				_, data, err := r.conn.ReadMessage()
+				if err != nil {
+					logger.L.Errorf("%w: %v", errRecv, err)
 					return
 				}
+
+				content := TextRespone{}
+				if err := json.Unmarshal(data, &content); err != nil {
+					logger.L.Errorln(err)
+					return
+				}
+
+				output <- content
 			}
 		}
 	}()

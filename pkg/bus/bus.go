@@ -1,9 +1,10 @@
 package bus
 
 import (
+	"sync"
+
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
-	"sync"
 )
 
 type Bus struct {
@@ -36,11 +37,7 @@ func (b Bus) Publish(event string, data interface{}) {
 	defer b.lock.RUnlock()
 
 	subs := b.subscribers[event]
-
-	logrus.Info("PUBLISH ", event)
-	logrus.Infof("PUBLISH SUBS: %+v", subs)
 	for _, sub := range subs {
-		logrus.Info("PUBLISH sub", event, " ", sub.uid)
 		if sub.C == nil {
 			continue
 		}
@@ -54,7 +51,7 @@ func (b *Bus) clear(event string) {
 	defer b.lock.Unlock()
 
 	subs := b.subscribers[event]
-	logrus.Infof("SUBS: %+v",  subs)
+	logrus.Infof("SUBS: %+v", subs)
 	if len(subs) == 0 {
 		return
 	}
@@ -74,7 +71,7 @@ func (b *Bus) clear(event string) {
 
 	b.subscribers[event] = notNilSubs
 
-	logrus.Infof("AFTER CLEAR SUBS: %+v",  b.subscribers[event])
+	logrus.Infof("AFTER CLEAR SUBS: %+v", b.subscribers[event])
 }
 
 var _ *Bus = &Bus{}

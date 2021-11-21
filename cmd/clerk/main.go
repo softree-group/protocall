@@ -7,6 +7,7 @@ import (
 	"protocall/internal/stapler"
 	"protocall/internal/stapler/notifier"
 	"protocall/internal/translator"
+	"protocall/pkg/connector"
 	"protocall/pkg/logger"
 	"protocall/pkg/mailer"
 	"protocall/pkg/recognizer"
@@ -34,7 +35,14 @@ func main() {
 	translator.InitRouter(
 		mux,
 		&translator.TranslatorHandler{
-			App: translator.NewTranslator(rec, storage),
+			App: translator.NewTranslator(
+				rec,
+				storage,
+				connector.NewConnectorCLient(
+					http.DefaultClient,
+					&cfg.Connector,
+				),
+			),
 		},
 	)
 	stapler.InitRouter(

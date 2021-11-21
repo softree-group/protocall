@@ -31,8 +31,6 @@ services:
       - protocall
   frontend:
     image: nginx:latest
-    environment:
-      - REACT_APP_DEBUG=1
     volumes:
       - ${PWD}/certs:/certs
       - ${PWD}/static:/var/www/html

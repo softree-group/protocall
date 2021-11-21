@@ -12,13 +12,15 @@ import (
 
 type ConnectorClient struct {
 	client *http.Client
-	config *ConnectorClientConfig
+	addr   string
+	token  string
 }
 
 func NewConnectorCLient(client *http.Client, config *ConnectorClientConfig) *ConnectorClient {
 	return &ConnectorClient{
 		client: client,
-		config: config,
+		addr:   fmt.Sprintf("http://%v:%v", config.Host, config.Port),
+		token:  config.Token,
 	}
 }
 
@@ -30,12 +32,14 @@ func (c *ConnectorClient) TranslationDone(ctx context.Context, r *translator.Tra
 	req, err := http.NewRequestWithContext(
 		context.Background(),
 		http.MethodPost,
-		fmt.Sprintf("%v:%v/translates", c.config.Host, c.config.Port),
+		fmt.Sprintf("%v/translates", c.addr),
 		strings.NewReader(r.User.SessionID),
 	)
 	if err != nil {
 		return err
 	}
+
+	req.Header.Add("Authorization", c.token)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

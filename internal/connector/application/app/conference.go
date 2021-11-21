@@ -157,7 +157,9 @@ func (c *Conference) Delete(meetID string) {
 }
 
 func (c *Conference) TranslateRecord(user *entity.User, recordPath string) error {
-	connTime, err := strconv.ParseInt(strings.Split(recordPath, "/")[0], 10, 64)
+	path := strings.Split(recordPath, "/")
+	timestamp := strings.Replace(path[len(path)-1], ".wav", "", -1)
+	connTime, err := strconv.ParseInt(timestamp, 10, 64)
 	if err != nil {
 		return err
 	}

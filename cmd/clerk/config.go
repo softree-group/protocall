@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"protocall/pkg/connector"
 	"protocall/pkg/logger"
 	"protocall/pkg/mailer"
 	"protocall/pkg/recognizer"
@@ -15,11 +16,12 @@ import (
 )
 
 type config struct {
-	Server     web.ServerConfig            `yaml:"server"`
-	Logger     logger.LoggerConfig         `yaml:"log"`
-	Recognizer recognizer.RecognizerConfig `yaml:"recognizer"`
-	Storage    s3.StorageConfig            `yaml:"s3"`
-	Mailer     mailer.MailerConfig         `yaml:"smtp"`
+	Server     web.ServerConfig                `yaml:"server"`
+	Logger     logger.LoggerConfig             `yaml:"log"`
+	Recognizer recognizer.RecognizerConfig     `yaml:"recognizer"`
+	Connector  connector.ConnectorClientConfig `yaml:"connector"`
+	Storage    s3.StorageConfig                `yaml:"s3"`
+	Mailer     mailer.MailerConfig             `yaml:"smtp"`
 }
 
 var (
@@ -44,5 +46,6 @@ func parseConfig() *config {
 
 	s3.ApplySecrets(&config.Storage)
 	mailer.ApplySecrets(&config.Mailer)
+	connector.ApplySecrets(&config.Connector)
 	return config
 }

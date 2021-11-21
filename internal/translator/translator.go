@@ -34,10 +34,11 @@ type Translator struct {
 	connector  Connector
 }
 
-func NewTranslator(r Recognizer, s Storage) *Translator {
+func NewTranslator(r Recognizer, s Storage, c Connector) *Translator {
 	return &Translator{
 		storage:    s,
 		recognizer: r,
+		connector:  c,
 	}
 }
 
@@ -63,6 +64,7 @@ func (t *Translator) processAudio(ctx context.Context, req *TranslateRequest) er
 
 	w := bytes.NewBuffer([]byte{})
 	for text := range t.recognizer.Recognize(ctx, audio) {
+		fmt.Println(text)
 		fmt.Fprint(w, phrase(req, &text))
 	}
 
@@ -80,12 +82,13 @@ func (t *Translator) processAudio(ctx context.Context, req *TranslateRequest) er
 func (t *Translator) Translate(req *TranslateRequest) {
 	go func() {
 		if err := t.processAudio(context.Background(), req); err != nil {
-			logger.L.Error("error while process record: ", req.User.Record)
+			logger.L.Errorln("error while process record: ", req.User.Record)
 			return
 		}
 		logger.L.Info("Translation done: ", req.User.Text)
 		if err := t.connector.TranslationDone(context.Background(), req); err != nil {
 			logger.L.Errorln("error while notify connector: ", err)
+			return
 		}
 		logger.L.Info("Connector successfully notified: ", req.User.SessionID)
 	}()

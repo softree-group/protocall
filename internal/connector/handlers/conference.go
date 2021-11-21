@@ -209,11 +209,10 @@ func info(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 }
 
 func translate(ctx *fasthttp.RequestCtx, apps *application.Applications) {
-	var sessionID string
-	err := json.Unmarshal(ctx.PostBody(), sessionID)
-	if err != nil {
-		logrus.Error(err.Error())
-		ctx.Error(err.Error(), http.StatusInternalServerError)
+	sessionID := string(ctx.PostBody())
+	if sessionID == "" {
+		ctx.Response.SetStatusCode(http.StatusBadRequest)
+		return
 	}
 
 	apps.Bus.Publish("/translated", apps.User.Find(sessionID))
