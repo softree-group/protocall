@@ -40,6 +40,12 @@ func authRequired(next fasthttp.RequestHandler) fasthttp.RequestHandler {
 	}
 }
 
+func fishMiddleware(next fasthttp.RequestHandler) fasthttp.RequestHandler {
+	return func(ctx *fasthttp.RequestCtx) {
+		next(ctx)
+	}
+}
+
 func prefixMiddleware(prefix string) func(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(next fasthttp.RequestHandler) fasthttp.RequestHandler {
 		return func(ctx *fasthttp.RequestCtx) {
