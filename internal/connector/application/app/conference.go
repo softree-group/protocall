@@ -162,6 +162,9 @@ func (c *Conference) Delete(meetID string) {
 
 func (c *Conference) TranslateRecord(user *entity.User, recordPath string, length time.Duration) error {
 	match := regexTime.FindStringSubmatch(recordPath)
+	if len(match) < 2 {
+		return errors.New(fmt.Sprintf("Invalid pattern recordPath: %s", recordPath))
+	}
 	connTime, err := strconv.ParseInt(match[1], 10, 64)
 	if err != nil {
 		return err
