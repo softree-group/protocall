@@ -94,7 +94,7 @@ func (a *ApplicationEventListener) handleUploadedEvent(event interface{}) {
 	}
 	logrus.WithField("user", data.User.SessionID).Debug("handle uploaded")
 
-	err := a.conferenceApp.TranslateRecord(data.User, data.Record)
+	err := a.conferenceApp.TranslateRecord(data.User, data.Record, data.Duration)
 	if err != nil {
 		logrus.Error("fail to translate: ", err)
 		a.bus.Publish("fail", event)
