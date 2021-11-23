@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
@@ -31,7 +32,7 @@ func NewPorterClient(config *PorterClientConfig) *PorterClient {
 	return t
 }
 
-func (p *PorterClient) UploadRecord(ctx context.Context, path string) error {
+func (p *PorterClient) UploadRecord(ctx context.Context, path string) (string, error) {
 	req, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
@@ -40,21 +41,26 @@ func (p *PorterClient) UploadRecord(ctx context.Context, path string) error {
 			path,
 			path,
 		),
-		nil,
+		http.NoBody,
 	)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	resp, err := p.Do(req)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusNoContent {
-		return fmt.Errorf("%w: status code %v", errUploadFile, resp.StatusCode)
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("%w: status code %v", errUploadFile, resp.StatusCode)
 	}
 
-	return nil
+	url, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return string(url), nil
 }

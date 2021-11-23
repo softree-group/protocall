@@ -16,7 +16,7 @@ var (
 )
 
 type Recognizer interface {
-	Recognize(ctx context.Context, filename string, length time.Duration) <-chan TranslateRespone
+	Recognize(ctx context.Context, filename string, length time.Duration) (<-chan TranslateRespone, <-chan error)
 }
 
 type Storage interface {
@@ -62,8 +62,19 @@ func (t *Translator) processAudio(ctx context.Context, req *TranslateRequest) er
 	}
 
 	w := bytes.NewBuffer([]byte{})
-	for chunk := range t.recognizer.Recognize(ctx, req.Record.Path, req.Record.Length) {
-		fmt.Fprint(w, phrase(req, &chunk))
+	chunk, err := t.recognizer.Recognize(ctx, req.Record.Path, req.Record.Length)
+	if err := func() error {
+		for {
+			select {
+			case data := <-chunk:
+				fmt.Fprint(w, phrase(req, &data))
+				return nil
+			case err := <-err:
+				return err
+			}
+		}
+	}(); err != nil {
+		return err
 	}
 
 	if err := t.storage.PutObject(
@@ -79,8 +90,11 @@ func (t *Translator) processAudio(ctx context.Context, req *TranslateRequest) er
 
 func (t *Translator) Translate(req *TranslateRequest) {
 	go func() {
+
+		fmt.Println("HERE", req)
+
 		if err := t.processAudio(context.Background(), req); err != nil {
-			logger.L.Errorln("error while process request: ", req)
+			logger.L.Errorln("error while process request: ", err)
 			return
 		}
 

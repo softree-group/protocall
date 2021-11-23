@@ -8,8 +8,6 @@ import (
 	"io"
 	"net/http"
 	"time"
-
-	"protocall/pkg/logger"
 )
 
 type Yastt struct {
@@ -26,7 +24,7 @@ func (y *Yastt) updateJob(ctx context.Context, id string) (*RecognizerResponse, 
 		ctx,
 		http.MethodPost,
 		fmt.Sprintf("%v/operations/%v", y.OperationAddr, id),
-		nil,
+		http.NoBody,
 	)
 	if err != nil {
 		return nil, err
@@ -95,8 +93,6 @@ func (y *Yastt) createJob(ctx context.Context, data *RecognizerRequest) (*Recogn
 
 	req.Header.Add("Authorization", fmt.Sprintf("Api-Key %v", y.SecretKey))
 
-	fmt.Println(req.Header)
-
 	resp, err := y.Do(req)
 	if err != nil {
 		return nil, err
@@ -112,10 +108,8 @@ func (y *Yastt) createJob(ctx context.Context, data *RecognizerRequest) (*Recogn
 		return nil, fmt.Errorf("response status: %d %v", resp.StatusCode, string(body))
 	}
 
-	buf := []byte{}
-	resp.Body.Read(buf)
 	result := &RecognizerResponse{}
-	if err := json.Unmarshal(buf, result); err != nil {
+	if err := json.Unmarshal(body, result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -123,23 +117,27 @@ func (y *Yastt) createJob(ctx context.Context, data *RecognizerRequest) (*Recogn
 
 // Recognize is sending requests to yandex cloud sst api.
 // Pool interval calculate from track length and coefficient from config.
-func (y *Yastt) Recognize(ctx context.Context, filename string, length time.Duration) <-chan Chunk {
+func (y *Yastt) Recognize(ctx context.Context, filename string, length time.Duration) (<-chan Chunk, <-chan error) {
 	out := make(chan Chunk)
+	outErr := make(chan error)
+
 	go func() {
 		defer close(out)
+		defer close(outErr)
 
 		resp, err := y.createJob(ctx, &RecognizerRequest{
 			Config: Config{y.Specification},
 			Audio:  Audio{filename},
 		})
 		if err != nil {
-			logger.L.Errorln(err)
+			outErr <- err
 			return
 		}
+
 		if !resp.Done {
 			resp, err = y.pool(ctx, resp.ID, length)
 			if err != nil {
-				logger.L.Errorln(err)
+				outErr <- err
 				return
 			}
 		}
@@ -148,5 +146,5 @@ func (y *Yastt) Recognize(ctx context.Context, filename string, length time.Dura
 			out <- chunk
 		}
 	}()
-	return out
+	return out, outErr
 }

@@ -164,6 +164,10 @@ func (c *Conference) TranslateRecord(user *entity.User, recordPath string, lengt
 		return err
 	}
 
+	fmt.Println("PARSED", )
+
+	fmt.Println("REPLACE", strings.Replace(recordPath, ".wav", ".txt", -1))
+
 	if err := c.reps.TranslateRecord(context.TODO(), &translator.TranslateRequest{
 		User: translator.User{
 			Username:    user.Username,
@@ -182,11 +186,12 @@ func (c *Conference) TranslateRecord(user *entity.User, recordPath string, lengt
 	return nil
 }
 
-func (c *Conference) UploadRecord(path string) error {
-	if err := c.reps.UploadRecord(context.TODO(), path); err != nil {
-		return err
+func (c *Conference) UploadRecord(path string) (string, error) {
+	url, err := c.reps.UploadRecord(context.TODO(), path)
+	if err != nil {
+		return "", err
 	}
-	return nil
+	return url, nil
 }
 
 func (c *Conference) CreateProtocol(conference *entity.Conference) error {

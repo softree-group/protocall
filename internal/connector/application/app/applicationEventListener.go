@@ -73,12 +73,13 @@ func (a *ApplicationEventListener) handleSavedEvent(event interface{}) {
 	data.User = user
 	data.ConferenceID = user.ConferenceID
 
-	err := a.conferenceApp.UploadRecord(data.Record)
+	url, err := a.conferenceApp.UploadRecord(data.Record)
 	if err != nil {
 		logrus.Error("fail to upload: ", err)
 		a.bus.Publish("fail", data)
 		return
 	}
+	data.Record = url
 
 	user.Records = append(user.Records, data.Record)
 	a.reps.SaveUser(user)

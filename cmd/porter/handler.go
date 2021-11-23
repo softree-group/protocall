@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"path/filepath"
 
 	"protocall/pkg/logger"
@@ -10,6 +11,7 @@ import (
 
 type storage interface {
 	PutFile(context.Context, string, string) error
+	GetLink(ctx context.Context, path string) (*url.URL, error)
 }
 
 type porterHandler struct {
@@ -32,11 +34,25 @@ func (ph *porterHandler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := ph.PutFile(r.Context(), filepath.Join(ph.root, from), filepath.Join(to)); err != nil {
+	remote := filepath.Join(to)
+	if err := ph.PutFile(r.Context(), filepath.Join(ph.root, from), remote); err != nil {
+		logger.L.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	link, err := ph.GetLink(r.Context(), remote)
+	if err != nil {
 		logger.L.Error(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	data, err := link.MarshalBinary()
+	if err != nil {
+		logger.L.Error(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(data)
 }
