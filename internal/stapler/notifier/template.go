@@ -21,7 +21,7 @@ const (
 	<div class="message">
 		<p>{{$phrase.Text}}</p>
 		<p>Пользователь {{$phrase.User}}</p>
-		<p>Время {{$phrase.Time}}</p>
+		<p>Время {{$phrase.Time.Format "15:04"}}</p>
 	</div>
 {{end}}
 `

@@ -5,7 +5,7 @@ import "os"
 type YasttConfig struct {
 	TranscribeAddr string `yaml:"transcribeAddr"`
 	OperationAddr  string `yaml:"operationAddr"`
-	Specification  `yaml:"specification"`
+	Specification         `yaml:"specification"`
 	// 1 minute of single channel audio is recognized in about 10 seconds.
 	// PoolCoefficient: 1.7
 	PoolCoefficient float64 `yaml:"poolCoefficient"`

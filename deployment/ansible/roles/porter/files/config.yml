@@ -5,3 +5,4 @@ root: "/var/spool/asterisk/recording"
 s3:
   bucket: "protocall"
   endpoint: "storage.yandexcloud.net"
+  useSSL: True

@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"protocall/internal/connector/application/applications"
 	"protocall/internal/connector/domain/entity"
 	"protocall/internal/connector/domain/repository"
@@ -52,7 +53,10 @@ func (a *ApplicationEventListener) handleStartRecordEvent(event interface{}) {
 
 	data.User = user
 	data.ConferenceID = user.ConferenceID
-	a.reps.Store(user.ConferenceID, data.Record)
+
+	fmt.Println("START PATH", data.Record.Path)
+
+	a.reps.Store(user.ConferenceID, data.Record.Path)
 }
 
 func (a *ApplicationEventListener) handleSavedEvent(event interface{}) {
@@ -73,15 +77,15 @@ func (a *ApplicationEventListener) handleSavedEvent(event interface{}) {
 	data.User = user
 	data.ConferenceID = user.ConferenceID
 
-	url, err := a.conferenceApp.UploadRecord(data.Record)
+	var err error
+	data.Record.URI, err = a.conferenceApp.UploadRecord(data.Record.Path)
 	if err != nil {
 		logrus.Error("fail to upload: ", err)
 		a.bus.Publish("fail", data)
 		return
 	}
-	data.Record = url
 
-	user.Records = append(user.Records, data.Record)
+	user.Records = append(user.Records, data.Record.Path)
 	a.reps.SaveUser(user)
 
 	a.bus.Publish("uploaded", data)
@@ -95,7 +99,7 @@ func (a *ApplicationEventListener) handleUploadedEvent(event interface{}) {
 	}
 	logrus.WithField("user", data.User.SessionID).Debug("handle uploaded")
 
-	err := a.conferenceApp.TranslateRecord(data.User, data.Record, data.Duration)
+	err := a.conferenceApp.TranslateRecord(data.User, data.Record)
 	if err != nil {
 		logrus.Error("fail to translate: ", err)
 		a.bus.Publish("fail", event)
@@ -119,7 +123,7 @@ func (a *ApplicationEventListener) handleTranslatedEvent(event interface{}) {
 	user.Texts = append(user.Texts, data.Text)
 	a.reps.SaveUser(user)
 
-	a.reps.DoneJob(data.ConferenceID, data.Record)
+	a.reps.DoneJob(data.ConferenceID, data.Record.Path)
 	if isDone, _ := a.reps.IsDone(data.ConferenceID); isDone {
 		a.bus.Publish("conferenceTranslated", event)
 	}
@@ -164,7 +168,7 @@ func (a *ApplicationEventListener) handleFailEvent(event interface{}) {
 	}
 	logrus.WithField("user", data.User.SessionID).Debug("handle fail")
 
-	a.reps.DoneJob(data.ConferenceID, data.Record)
+	a.reps.DoneJob(data.ConferenceID, data.Record.Path)
 	a.reps.DeleteUser(data.User.SessionID)
 }
 

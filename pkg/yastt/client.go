@@ -22,7 +22,7 @@ func NewYastt(client *http.Client, config *YasttConfig) *Yastt {
 func (y *Yastt) updateJob(ctx context.Context, id string) (*RecognizerResponse, error) {
 	req, err := http.NewRequestWithContext(
 		ctx,
-		http.MethodPost,
+		http.MethodGet,
 		fmt.Sprintf("%v/operations/%v", y.OperationAddr, id),
 		http.NoBody,
 	)
@@ -70,6 +70,7 @@ func (y *Yastt) pool(ctx context.Context, id string, length time.Duration) (*Rec
 				interval /= 2
 				continue
 			}
+
 			return resp, nil
 		}
 	}
@@ -145,6 +146,7 @@ func (y *Yastt) Recognize(ctx context.Context, filename string, length time.Dura
 		for _, chunk := range resp.Response.Chunks {
 			out <- chunk
 		}
+		outErr <- nil
 	}()
 	return out, outErr
 }

@@ -1,7 +1,5 @@
 package yastt
 
-import "time"
-
 type Specification struct {
 	LanguageCode      string `yaml:"languageCode"      json:"languageCode,omitempty"`
 	Model             string `yaml:"model"             json:"model omitempty"`
@@ -26,9 +24,9 @@ type RecognizerRequest struct {
 }
 
 type Word struct {
-	StartTime time.Duration `json:"startTime"`
-	EndTime   time.Duration `json:"endTime"`
-	Word      string        `json:"word"`
+	StartTime string `json:"startTime"`
+	EndTime   string `json:"endTime"`
+	Word      string `json:"word"`
 }
 
 type Alternative struct {
@@ -38,7 +36,7 @@ type Alternative struct {
 
 type Chunk struct {
 	Alternatives []Alternative `json:"alternatives"`
-	ChannelTag   int           `json:"channelTag"`
+	ChannelTag   string        `json:"channelTag"`
 }
 
 type Response struct {
