@@ -6,7 +6,7 @@ type Subscriber struct {
 	C     chan interface{}
 	clear func()
 	event string
-	uid string
+	uid   string
 }
 
 func (s *Subscriber) Cancel() {

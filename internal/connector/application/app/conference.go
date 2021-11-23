@@ -156,7 +156,7 @@ func (c *Conference) Delete(meetID string) {
 	c.reps.DeleteConference(meetID)
 }
 
-func (c *Conference) TranslateRecord(user *entity.User, recordPath string) error {
+func (c *Conference) TranslateRecord(user *entity.User, recordPath string, length time.Duration) error {
 	path := strings.Split(recordPath, "/")
 	timestamp := strings.Replace(path[len(path)-1], ".wav", "", -1)
 	connTime, err := strconv.ParseInt(timestamp, 10, 64)
@@ -169,7 +169,7 @@ func (c *Conference) TranslateRecord(user *entity.User, recordPath string) error
 			Username:    user.Username,
 			ConnectTime: time.Unix(connTime, 0),
 			SessionID:   user.SessionID,
-			Record:      recordPath,
+			Record:      translator.Record{},
 			Text:        strings.Replace(recordPath, ".wav", ".txt", -1),
 		},
 	}); err != nil {

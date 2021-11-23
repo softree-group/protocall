@@ -7,6 +7,7 @@ import (
 
 	"protocall/internal/connector/application"
 	"protocall/internal/connector/domain/entity"
+	"protocall/internal/translator"
 
 	"github.com/google/btree"
 	"github.com/sirupsen/logrus"
@@ -209,12 +210,23 @@ func info(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 }
 
 func translate(ctx *fasthttp.RequestCtx, apps *application.Applications) {
-	sessionID := string(ctx.PostBody())
-	if sessionID == "" {
+	data := translator.ConnectorRequest{}
+	if err := json.Unmarshal(ctx.PostBody(), &data); err != nil {
 		ctx.Response.SetStatusCode(http.StatusBadRequest)
 		return
 	}
 
-	apps.Bus.Publish("/translated", apps.User.Find(sessionID))
+	user := apps.User.Find(data.SessionID)
+	if user == nil {
+		ctx.Response.SetStatusCode(http.StatusInternalServerError)
+		return
+	}
+
+	apps.Bus.Publish("translated", entity.EventDefault{
+		ConferenceID: user.ConferenceID,
+		User:         user,
+		Text:         data.Text,
+		Record:       data.Record,
+	})
 	ctx.Response.SetStatusCode(http.StatusNoContent)
 }

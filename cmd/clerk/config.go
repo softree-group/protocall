@@ -8,17 +8,17 @@ import (
 	"protocall/pkg/connector"
 	"protocall/pkg/logger"
 	"protocall/pkg/mailer"
-	"protocall/pkg/recognizer"
 	"protocall/pkg/s3"
-	"protocall/pkg/web"
+	"protocall/pkg/webcore"
+	"protocall/pkg/yastt"
 
 	"gopkg.in/yaml.v2"
 )
 
 type config struct {
-	Server     web.ServerConfig                `yaml:"server"`
+	Server     webcore.ServerConfig            `yaml:"server"`
 	Logger     logger.LoggerConfig             `yaml:"log"`
-	Recognizer recognizer.RecognizerConfig     `yaml:"recognizer"`
+	Recognizer yastt.YasttConfig               `yaml:"yastt"`
 	Connector  connector.ConnectorClientConfig `yaml:"connector"`
 	Storage    s3.StorageConfig                `yaml:"s3"`
 	Mailer     mailer.MailerConfig             `yaml:"smtp"`

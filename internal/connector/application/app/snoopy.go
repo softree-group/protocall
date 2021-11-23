@@ -48,7 +48,7 @@ func (s *Snoopy) channelHandler(channel *ari.ChannelHandle, recordPath string, s
 	ctx := context.Background()
 	rec := record.Record(ctx, channel)
 	s.bus.Publish("startRecord", entity.EventDefault{
-		RecName: recordPath,
+		Record: recordPath,
 		User: &entity.User{
 			SessionID: sessionID,
 		},
@@ -69,7 +69,7 @@ func (s *Snoopy) channelHandler(channel *ari.ChannelHandle, recordPath string, s
 			}
 
 			s.bus.Publish("saved", entity.EventDefault{
-				RecName: recordPath,
+				Record: recordPath,
 				User: &entity.User{
 					SessionID: sessionID,
 				},

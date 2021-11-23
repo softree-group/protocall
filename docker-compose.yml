@@ -23,6 +23,7 @@ services:
       - ACCESS_KEY
       - SECRET_KEY
       - EMAIL_KEY
+      - CONNECTOR_KEY
     volumes:
       - ${PWD}/clerk.yml:/app/clerk.yml
     ports:

@@ -18,7 +18,7 @@ type EventListener struct {
 	conference applications.Conference
 	account    applications.AsteriskAccount
 	socket     applications.Socket
-	bus services.Bus
+	bus        services.Bus
 }
 
 func NewListener(reps repository.Repositories,
@@ -37,7 +37,7 @@ func NewListener(reps repository.Repositories,
 		conference: conference,
 		account:    account,
 		socket:     socket,
-		bus: bus,
+		bus:        bus,
 	}
 }
 
@@ -109,11 +109,14 @@ func (e *EventListener) Listen() {
 			}
 
 			err = e.socket.PublishConnectedEvent(user)
+			if err != nil {
+				logrus.Error("fail to send socket message for connected event: ", err)
+			}
 			err = e.socket.PublishUserMessage(user, entity.SocketMessage{
 				"event": "ready",
 			})
 			if err != nil {
-				logrus.Error("fail to send socket message: ", err)
+				logrus.Error("fail to send socket message for ready event: ", err)
 			}
 		case event := <-leftBridge.Events():
 			value := event.(*ari.ChannelLeftBridge)

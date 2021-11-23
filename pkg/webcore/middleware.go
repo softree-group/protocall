@@ -1,4 +1,4 @@
-package web
+package webcore
 
 import (
 	"net/http"

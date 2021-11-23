@@ -6,7 +6,7 @@ import (
 
 	"protocall/pkg/logger"
 	"protocall/pkg/s3"
-	"protocall/pkg/web"
+	"protocall/pkg/webcore"
 )
 
 func main() {
@@ -22,7 +22,7 @@ func main() {
 	initRouter(mux, &porterHandler{storage, cfg.Root})
 
 	logger.L.Infof("Starting server on %v:%v", cfg.Server.Host, cfg.Server.Port)
-	if err = web.NewServer(mux, &cfg.Server).Start(); err != nil {
+	if err = webcore.NewServer(mux, &cfg.Server).Start(); err != nil {
 		log.Fatalf("server error: %v", err)
 	}
 }

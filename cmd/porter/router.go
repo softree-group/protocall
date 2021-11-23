@@ -2,9 +2,10 @@ package main
 
 import (
 	"net/http"
-	"protocall/pkg/web"
+
+	"protocall/pkg/webcore"
 )
 
 func initRouter(mux *http.ServeMux, porter *porterHandler) {
-	mux.HandleFunc("/records", web.ApplyMethods(porter.serveHTTP, "POST"))
+	mux.HandleFunc("/records", webcore.ApplyMethods(porter.serveHTTP, "POST"))
 }

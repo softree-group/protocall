@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"net/http"
 
 	"protocall/internal/stapler"
@@ -10,9 +9,9 @@ import (
 	"protocall/pkg/connector"
 	"protocall/pkg/logger"
 	"protocall/pkg/mailer"
-	"protocall/pkg/recognizer"
 	"protocall/pkg/s3"
-	"protocall/pkg/web"
+	"protocall/pkg/webcore"
+	"protocall/pkg/yastt"
 )
 
 func main() {
@@ -24,19 +23,12 @@ func main() {
 		logger.L.Fatalf("did not connect to s3: %v", err)
 	}
 
-	ctx := context.Background()
-
-	rec, err := recognizer.NewRecognizer(ctx, &cfg.Recognizer)
-	if err != nil {
-		logger.L.Fatalf("did not connect to recognizer: %v", err)
-	}
-
 	mux := &http.ServeMux{}
 	translator.InitRouter(
 		mux,
 		&translator.TranslatorHandler{
 			App: translator.NewTranslator(
-				rec,
+				yastt.NewYastt(http.DefaultClient, &cfg.Recognizer),
 				storage,
 				connector.NewConnectorCLient(
 					http.DefaultClient,
@@ -53,7 +45,7 @@ func main() {
 	)
 
 	logger.L.Infof("Starting server on %v:%v", cfg.Server.Host, cfg.Server.Port)
-	if err := web.NewServer(mux, &cfg.Server).Start(); err != nil {
+	if err := webcore.NewServer(mux, &cfg.Server).Start(); err != nil {
 		logger.L.Fatalf("error while running server: %v", err)
 	}
 }

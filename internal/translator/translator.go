@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"protocall/pkg/logger"
+	"protocall/pkg/yastt"
 )
 
 var (
@@ -16,7 +17,7 @@ var (
 )
 
 type Recognizer interface {
-	Recognize(context.Context, io.Reader) <-chan TranslateRespone
+	Recognize(ctx context.Context, filename string, length time.Duration) <-chan yastt.Chunk
 }
 
 type Storage interface {
@@ -25,7 +26,7 @@ type Storage interface {
 }
 
 type Connector interface {
-	TranslationDone(context.Context, *TranslateRequest) error
+	TranslationDone(context.Context, *ConnectorRequest) error
 }
 
 type Translator struct {
@@ -43,29 +44,27 @@ func NewTranslator(r Recognizer, s Storage, c Connector) *Translator {
 }
 
 func (t *Translator) processAudio(ctx context.Context, req *TranslateRequest) error {
-	audio, err := t.storage.GetObject(ctx, req.User.Record)
-	if err != nil {
-		return err
-	}
-	defer audio.Close()
-
 	phrase := func(req *TranslateRequest, resp *TranslateRespone) string {
-		if resp.Text == "" {
+		if len(resp.Alternatives) == 0 {
+			return ""
+		}
+
+		chunk := resp.Alternatives[0]
+		if chunk.Text == "" {
 			return ""
 		}
 
 		return fmt.Sprintf(
 			"%v:%v:%v\n",
-			req.ConnectTime.Add(time.Duration(resp.Result[0].Start*float64(time.Second))),
+			req.ConnectTime.Add(chunk.Words[0].StartTime),
 			req.User.Username,
-			resp.Text,
+			chunk.Text,
 		)
 	}
 
 	w := bytes.NewBuffer([]byte{})
-	for text := range t.recognizer.Recognize(ctx, audio) {
-		fmt.Println(text)
-		fmt.Fprint(w, phrase(req, &text))
+	for chunk := range t.recognizer.Recognize(ctx, req.Record.Path, req.Record.Length) {
+		fmt.Fprint(w, phrase(req, &chunk))
 	}
 
 	if err := t.storage.PutObject(
@@ -82,14 +81,19 @@ func (t *Translator) processAudio(ctx context.Context, req *TranslateRequest) er
 func (t *Translator) Translate(req *TranslateRequest) {
 	go func() {
 		if err := t.processAudio(context.Background(), req); err != nil {
-			logger.L.Errorln("error while process record: ", req.User.Record)
+			logger.L.Errorln("error while process record: ", req.Record)
 			return
 		}
-		logger.L.Info("Translation done: ", req.User.Text)
-		if err := t.connector.TranslationDone(context.Background(), req); err != nil {
+
+		logger.L.Info("Translation done: ", req.Text)
+		if err := t.connector.TranslationDone(context.Background(), &ConnectorRequest{
+			SessionID: req.SessionID,
+			Text:      req.Text,
+			Record:    req.Record.Path,
+		}); err != nil {
 			logger.L.Errorln("error while notify connector: ", err)
 			return
 		}
-		logger.L.Info("Connector successfully notified: ", req.User.SessionID)
+		logger.L.Info("Connector successfully notified: ")
 	}()
 }
