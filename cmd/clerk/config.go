@@ -47,5 +47,6 @@ func parseConfig() *config {
 	s3.ApplySecrets(&config.Storage)
 	mailer.ApplySecrets(&config.Mailer)
 	connector.ApplySecrets(&config.Connector)
+	yastt.ApplySecrets(&config.Recognizer)
 	return config
 }

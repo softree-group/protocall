@@ -1,13 +1,13 @@
 package stapler
 
 type User struct {
-	Username     string   `json:"username" binding:"required"`
+	Username     string   `json:"username"`
 	Email        string   `json:"email"`
-	NeedProtocol bool     `json:"need_protocol binding:"required"`
-	Records      []string `json:"records" binding:"required"`
-	Texts        []string `json:"texts" binding:"required"`
+	NeedProtocol bool     `json:"need_protocol`
+	Records      []string `json:"records"`
+	Texts        []string `json:"texts"`
 }
 
 type ProtocolRequest struct {
-	Users []User `json:"users" binding:"required"`
+	Users []User `json:"users"`
 }

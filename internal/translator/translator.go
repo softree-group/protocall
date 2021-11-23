@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"protocall/pkg/logger"
-	"protocall/pkg/yastt"
 )
 
 var (
@@ -17,7 +16,7 @@ var (
 )
 
 type Recognizer interface {
-	Recognize(ctx context.Context, filename string, length time.Duration) <-chan yastt.Chunk
+	Recognize(ctx context.Context, filename string, length time.Duration) <-chan TranslateRespone
 }
 
 type Storage interface {
@@ -81,7 +80,7 @@ func (t *Translator) processAudio(ctx context.Context, req *TranslateRequest) er
 func (t *Translator) Translate(req *TranslateRequest) {
 	go func() {
 		if err := t.processAudio(context.Background(), req); err != nil {
-			logger.L.Errorln("error while process record: ", req.Record)
+			logger.L.Errorln("error while process request: ", req)
 			return
 		}
 

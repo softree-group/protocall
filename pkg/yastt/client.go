@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -31,19 +31,26 @@ func (y *Yastt) updateJob(ctx context.Context, id string) (*RecognizerResponse, 
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Authorization", fmt.Sprintf("Api-Key %v", y.SecretKey))
+
 	resp, err := y.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New("response status code not ok")
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
 	}
 
-	buf := []byte{}
-	resp.Body.Read(buf)
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("response status: %d %v", resp.StatusCode, string(body))
+	}
+
 	result := &RecognizerResponse{}
-	if err := json.Unmarshal(buf, result); err != nil {
+	if err := json.Unmarshal(body, result); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -85,13 +92,24 @@ func (y *Yastt) createJob(ctx context.Context, data *RecognizerRequest) (*Recogn
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Authorization", fmt.Sprintf("Api-Key %v", y.SecretKey))
+
+	fmt.Println(req.Header)
+
 	resp, err := y.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	body, err = io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New("response status code not ok")
+		return nil, fmt.Errorf("response status: %d %v", resp.StatusCode, string(body))
 	}
 
 	buf := []byte{}

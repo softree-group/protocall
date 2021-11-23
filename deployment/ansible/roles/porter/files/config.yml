@@ -3,5 +3,5 @@ server:
   port: "8888"
 root: "/var/spool/asterisk/recording"
 s3:
-  bucket: "protocall-storage"
-  endpoint: "fra1.digitaloceanspaces.com"
+  bucket: "protocall"
+  endpoint: "storage.yandexcloud.net"

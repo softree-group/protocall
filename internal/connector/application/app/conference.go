@@ -169,8 +169,11 @@ func (c *Conference) TranslateRecord(user *entity.User, recordPath string, lengt
 			Username:    user.Username,
 			ConnectTime: time.Unix(connTime, 0),
 			SessionID:   user.SessionID,
-			Record:      translator.Record{},
-			Text:        strings.Replace(recordPath, ".wav", ".txt", -1),
+			Record: translator.Record{
+				Path:   recordPath,
+				Length: length,
+			},
+			Text: strings.Replace(recordPath, ".wav", ".txt", -1),
 		},
 	}); err != nil {
 		logrus.Error(err)
