@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"time"
 
 	"protocall/internal/connector/config"
 	"protocall/internal/connector/domain/entity"
@@ -53,6 +54,7 @@ func (s *Snoopy) channelHandler(channel *ari.ChannelHandle, recordPath string, s
 			SessionID: sessionID,
 		},
 	})
+	startedTime := time.Now()
 
 	for {
 		select {
@@ -70,6 +72,7 @@ func (s *Snoopy) channelHandler(channel *ari.ChannelHandle, recordPath string, s
 
 			s.bus.Publish("saved", entity.EventDefault{
 				RecName: recordPath,
+				Duration: time.Since(startedTime),
 				User: &entity.User{
 					SessionID: sessionID,
 				},
