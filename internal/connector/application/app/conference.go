@@ -34,7 +34,6 @@ type Conference struct {
 
 var regexTime = regexp.MustCompile(`(\d+).wav`)
 
-
 func NewConference(reps repository.Repositories, ariClient ari.Client, bus services.Bus) *Conference {
 	return &Conference{
 		reps: reps,
@@ -162,12 +161,15 @@ func (c *Conference) Delete(meetID string) {
 
 func (c *Conference) TranslateRecord(user *entity.User, recordPath string, length time.Duration) error {
 	match := regexTime.FindStringSubmatch(recordPath)
+	if len(match) < 2 {
+		return fmt.Errorf("invalid pattern recordPath: %s", recordPath)
+	}
 	connTime, err := strconv.ParseInt(match[1], 10, 64)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("PARSED", )
+	fmt.Println("PARSED")
 
 	fmt.Println("REPLACE", strings.Replace(recordPath, ".wav", ".txt", -1))
 
