@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -30,6 +31,9 @@ type Conference struct {
 	ari  ari.Client
 	bus  services.Bus
 }
+
+var regexTime = regexp.MustCompile(`(\d+).wav`)
+
 
 func NewConference(reps repository.Repositories, ariClient ari.Client, bus services.Bus) *Conference {
 	return &Conference{
@@ -157,9 +161,8 @@ func (c *Conference) Delete(meetID string) {
 }
 
 func (c *Conference) TranslateRecord(user *entity.User, recordPath string, length time.Duration) error {
-	path := strings.Split(recordPath, "/")
-	timestamp := strings.Replace(path[len(path)-1], ".wav", "", -1)
-	connTime, err := strconv.ParseInt(timestamp, 10, 64)
+	match := regexTime.FindStringSubmatch(recordPath)
+	connTime, err := strconv.ParseInt(match[1], 10, 64)
 	if err != nil {
 		return err
 	}
