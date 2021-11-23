@@ -7,9 +7,11 @@ type YasttConfig struct {
 	OperationAddr   string `yaml:"operationAddr"`
 	Specification   `yaml:"specification"`
 	PoolCoefficient float64 `yaml:"poolCoefficient"`
-	Token           string
+	AccessKey       string
+	SecretKey       string
 }
 
 func ApplySecrets(cfg *YasttConfig) {
-	cfg.Token = os.Getenv("RECOGNIZER_KEY")
+	cfg.AccessKey = os.Getenv("YASTT_ACCESS_KEY")
+	cfg.SecretKey = os.Getenv("YASTT_SECRET_KEY")
 }
