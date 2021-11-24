@@ -3,17 +3,12 @@ package translator
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"time"
 
 	"protocall/internal/stapler"
 	"protocall/pkg/logger"
-)
-
-var (
-	errGetObject = errors.New("error while getting object from storage")
 )
 
 type Recognizer interface {
@@ -43,31 +38,6 @@ func NewTranslator(r Recognizer, s Storage, c Connector) *Translator {
 	}
 }
 
-func phrase(req *TranslateRequest, resp *TranslateRespone) string {
-	if len(resp.Alternatives) == 0 {
-		return ""
-	}
-
-	chunk := resp.Alternatives[0]
-	if chunk.Text == "" {
-		return ""
-	}
-
-	offset, err := time.ParseDuration(chunk.Words[0].StartTime)
-	if err != nil {
-		return ""
-	}
-
-	return fmt.Sprintf(
-		"%v%s%v%s%v\n",
-		req.ConnectTime.Add(offset).Format(time.RFC850),
-		stapler.Delimeter,
-		req.User.Username,
-		stapler.Delimeter,
-		chunk.Text,
-	)
-}
-
 func (t *Translator) Translate(req *TranslateRequest) {
 	go func() {
 		ctx := context.Background()
@@ -77,7 +47,27 @@ func (t *Translator) Translate(req *TranslateRequest) {
 			for {
 				select {
 				case data := <-chunk:
-					fmt.Fprint(w, phrase(req, &data))
+					if len(data.Alternatives) == 0 {
+						return nil
+					}
+
+					chunk := data.Alternatives[0]
+					if chunk.Text == "" {
+						return nil
+					}
+
+					offset, err := time.ParseDuration(chunk.Words[0].StartTime)
+					if err != nil {
+						return err
+					}
+
+					fmt.Fprintf(w, "%v%s%v%s%v\n",
+						req.ConnectTime.Add(offset).Format(time.RFC850),
+						stapler.Delimeter,
+						req.User.Username,
+						stapler.Delimeter,
+						chunk.Text,
+					)
 				case err := <-err:
 					return err
 				}
@@ -92,7 +82,7 @@ func (t *Translator) Translate(req *TranslateRequest) {
 			req.Text,
 			bytes.NewReader(w.Bytes()),
 		); err != nil {
-			logger.L.Errorf("%w: %v", errGetObject, err)
+			logger.L.Errorf("%w: %v", "error while getting object from storage", err)
 			return
 		}
 

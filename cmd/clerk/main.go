@@ -3,8 +3,8 @@ package main
 import (
 	"net/http"
 
+	"protocall/internal/notifier"
 	"protocall/internal/stapler"
-	"protocall/internal/stapler/notifier"
 	"protocall/internal/translator"
 	"protocall/pkg/connector"
 	"protocall/pkg/logger"
@@ -40,7 +40,8 @@ func main() {
 	stapler.InitRouter(
 		mux,
 		&stapler.StaplerHandler{
-			App: stapler.NewStapler(storage, notifier.NewNotifier(mailer.NewMailer(&cfg.Mailer))),
+			stapler.NewStapler(storage),
+			notifier.NewNotifier(mailer.NewMailer(&cfg.Mailer)),
 		},
 	)
 
