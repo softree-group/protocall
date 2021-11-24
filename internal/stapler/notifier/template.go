@@ -81,7 +81,6 @@ var notifyMessage = template.Must(template.New("base").Parse(body))
 
 func render(phrases []stapler.Phrase) string {
 	res := &bytes.Buffer{}
-	time.RF
 	if err := notifyMessage.ExecuteTemplate(res, "base", struct {
 		Phrases []stapler.Phrase
 		Time time.Time
