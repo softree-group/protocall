@@ -34,7 +34,6 @@ type Conference struct {
 
 var regexTime = regexp.MustCompile(`(\d+).wav`)
 
-
 func NewConference(reps repository.Repositories, ariClient ari.Client, bus services.Bus) *Conference {
 	return &Conference{
 		reps: reps,
@@ -160,19 +159,15 @@ func (c *Conference) Delete(meetID string) {
 	c.reps.DeleteConference(meetID)
 }
 
-func (c *Conference) TranslateRecord(user *entity.User, recordPath string, length time.Duration) error {
-	match := regexTime.FindStringSubmatch(recordPath)
+func (c *Conference) TranslateRecord(user *entity.User, record *entity.Record) error {
+	match := regexTime.FindStringSubmatch(record.URI)
 	if len(match) < 2 {
-		return errors.New(fmt.Sprintf("Invalid pattern recordPath: %s", recordPath))
+		return fmt.Errorf("invalid pattern recordPath: %s", record.URI)
 	}
 	connTime, err := strconv.ParseInt(match[1], 10, 64)
 	if err != nil {
 		return err
 	}
-
-	fmt.Println("PARSED", )
-
-	fmt.Println("REPLACE", strings.Replace(recordPath, ".wav", ".txt", -1))
 
 	if err := c.reps.TranslateRecord(context.TODO(), &translator.TranslateRequest{
 		User: translator.User{
@@ -180,10 +175,11 @@ func (c *Conference) TranslateRecord(user *entity.User, recordPath string, lengt
 			ConnectTime: time.Unix(connTime, 0),
 			SessionID:   user.SessionID,
 			Record: translator.Record{
-				Path:   recordPath,
-				Length: length,
+				URI:    record.URI,
+				Length: record.Length,
+				Path:   record.Path,
 			},
-			Text: strings.Replace(recordPath, ".wav", ".txt", -1),
+			Text: strings.Replace(record.Path, ".wav", ".txt", -1),
 		},
 	}); err != nil {
 		logrus.Error(err)
@@ -217,6 +213,7 @@ func (c *Conference) CreateProtocol(conference *entity.Conference) error {
 
 			if participant.Email != "" {
 				user.Email = participant.Email
+				user.NeedProtocol = true
 			}
 			user.Records = participant.Records
 			user.Texts = participant.Texts

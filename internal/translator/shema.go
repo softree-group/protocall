@@ -1,11 +1,13 @@
 package translator
 
 import (
-	"protocall/pkg/yastt"
 	"time"
+
+	"protocall/pkg/yastt"
 )
 
 type Record struct {
+	URI    string        `json:"uri"`
 	Path   string        `json:"path"`
 	Length time.Duration `json:"length"`
 }
@@ -26,6 +28,6 @@ type TranslateRespone = yastt.Chunk
 
 type ConnectorRequest struct {
 	SessionID string `json:"session_id"`
-	Record    string `json:"record"`
+	Record    Record `json:"record"`
 	Text      string `json:"text"`
 }

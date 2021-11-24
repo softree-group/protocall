@@ -2,10 +2,15 @@ package entity
 
 import "time"
 
+type Record struct {
+	Path   string
+	URI    string
+	Length time.Duration
+}
+
 type EventDefault struct {
-	ConferenceID string
-	Record       string
-	Duration     time.Duration
-	Text         string
+	Record       *Record
 	User         *User
+	ConferenceID string
+	Text         string
 }

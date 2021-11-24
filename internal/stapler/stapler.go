@@ -2,7 +2,6 @@ package stapler
 
 import (
 	"context"
-	"fmt"
 	"sort"
 
 	"protocall/pkg/logger"
@@ -51,9 +50,7 @@ func (s *Stapler) Protocol(ctx context.Context, req *ProtocolRequest) error {
 		return data[i].Time.Unix() < data[j].Time.Unix()
 	})
 
-	fmt.Println(data)
-
-	// s.notifier.Send(ctx, data, req.Users)
+	s.notifier.Send(ctx, data, req.Users)
 	logger.L.Info("successfully send protocol")
 	return nil
 }

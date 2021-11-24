@@ -2,7 +2,6 @@ package applications
 
 import (
 	"protocall/internal/connector/domain/entity"
-	"time"
 )
 
 type Conference interface {
@@ -11,7 +10,7 @@ type Conference interface {
 	IsExist(meetID string) bool
 	StartRecord(user *entity.User, meetID string) error
 	UploadRecord(path string) (string, error)
-	TranslateRecord(user *entity.User, recordPath string, length time.Duration) error
+	TranslateRecord(user *entity.User, record *entity.Record) error
 	CreateProtocol(conference *entity.Conference) error
 	Get(meetID string) *entity.Conference
 	StartRecordUser(user *entity.User, meetID string) error

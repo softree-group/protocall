@@ -66,6 +66,7 @@ func session(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	if account == nil {
 		account = apps.AsteriskAccount.GetFree()
 		if account == nil {
+			ctx.Response.Header.DelCookie(sessionCookie)
 			ctx.Error("Sorry, we are busy ;(", fasthttp.StatusServiceUnavailable)
 			// TODO: wait free account
 			return

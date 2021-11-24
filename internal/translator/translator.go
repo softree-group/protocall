@@ -8,6 +8,7 @@ import (
 	"io"
 	"time"
 
+	"protocall/internal/stapler"
 	"protocall/pkg/logger"
 )
 
@@ -42,71 +43,70 @@ func NewTranslator(r Recognizer, s Storage, c Connector) *Translator {
 	}
 }
 
-func (t *Translator) processAudio(ctx context.Context, req *TranslateRequest) error {
-	phrase := func(req *TranslateRequest, resp *TranslateRespone) string {
-		if len(resp.Alternatives) == 0 {
-			return ""
-		}
-
-		chunk := resp.Alternatives[0]
-		if chunk.Text == "" {
-			return ""
-		}
-
-		return fmt.Sprintf(
-			"%v:%v:%v\n",
-			req.ConnectTime.Add(chunk.Words[0].StartTime),
-			req.User.Username,
-			chunk.Text,
-		)
+func phrase(req *TranslateRequest, resp *TranslateRespone) string {
+	if len(resp.Alternatives) == 0 {
+		return ""
 	}
 
-	w := bytes.NewBuffer([]byte{})
-	chunk, err := t.recognizer.Recognize(ctx, req.Record.Path, req.Record.Length)
-	if err := func() error {
-		for {
-			select {
-			case data := <-chunk:
-				fmt.Fprint(w, phrase(req, &data))
-				return nil
-			case err := <-err:
-				return err
-			}
-		}
-	}(); err != nil {
-		return err
+	chunk := resp.Alternatives[0]
+	if chunk.Text == "" {
+		return ""
 	}
 
-	if err := t.storage.PutObject(
-		ctx,
-		req.User.Text,
-		bytes.NewReader(w.Bytes()),
-	); err != nil {
-		return fmt.Errorf("%w: %v", errGetObject, err)
+	offset, err := time.ParseDuration(chunk.Words[0].StartTime)
+	if err != nil {
+		return ""
 	}
 
-	return nil
+	return fmt.Sprintf(
+		"%v%s%v%s%v\n",
+		req.ConnectTime.Add(offset).Format(time.RFC850),
+		stapler.Delimeter,
+		req.User.Username,
+		stapler.Delimeter,
+		chunk.Text,
+	)
 }
 
 func (t *Translator) Translate(req *TranslateRequest) {
 	go func() {
-
-		fmt.Println("HERE", req)
-
-		if err := t.processAudio(context.Background(), req); err != nil {
-			logger.L.Errorln("error while process request: ", err)
+		ctx := context.Background()
+		w := bytes.NewBuffer([]byte{})
+		chunk, err := t.recognizer.Recognize(ctx, req.Record.URI, req.Record.Length)
+		if err := func() error {
+			for {
+				select {
+				case data := <-chunk:
+					fmt.Fprint(w, phrase(req, &data))
+				case err := <-err:
+					return err
+				}
+			}
+		}(); err != nil {
+			logger.L.Error(err)
 			return
 		}
 
-		logger.L.Info("Translation done: ", req.Text)
+		if err := t.storage.PutObject(
+			ctx,
+			req.Text,
+			bytes.NewReader(w.Bytes()),
+		); err != nil {
+			logger.L.Errorf("%w: %v", errGetObject, err)
+			return
+		}
+
 		if err := t.connector.TranslationDone(context.Background(), &ConnectorRequest{
 			SessionID: req.SessionID,
 			Text:      req.Text,
-			Record:    req.Record.Path,
+			Record: Record{
+				URI:  req.Record.URI,
+				Path: req.Record.Path,
+			},
 		}); err != nil {
 			logger.L.Errorln("error while notify connector: ", err)
 			return
 		}
-		logger.L.Info("Connector successfully notified: ")
+		logger.L.Info("Connector successfully notified")
 	}()
 }
