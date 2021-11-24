@@ -204,21 +204,16 @@ func (c *Conference) CreateProtocol(conference *entity.Conference) error {
 				return false
 			}
 
-			user := stapler.User{}
-
 			participant, ok := i.(*entity.User)
 			if !ok {
 				return false
 			}
-
-			if participant.Email != "" {
-				user.Email = participant.Email
-				user.NeedProtocol = true
-			}
+			user := stapler.User{}
+			user.Email = participant.Email
+			user.NeedProtocol = participant.NeedProtocol
 			user.Records = participant.Records
 			user.Texts = participant.Texts
 			user.Username = participant.Username
-
 			users = append(users, user)
 			return true
 		},

@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"protocall/internal/connector/application/applications"
 	"protocall/internal/connector/domain/entity"
 	"protocall/internal/connector/domain/repository"
@@ -118,6 +119,9 @@ func (a *ApplicationEventListener) handleTranslatedEvent(event interface{}) {
 		return
 	}
 	user.Texts = append(user.Texts, data.Text)
+
+	fmt.Printf("123 %+v", user)
+
 	a.reps.SaveUser(user)
 
 	a.reps.DoneJob(data.ConferenceID, data.Record.Path)

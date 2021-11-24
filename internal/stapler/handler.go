@@ -26,21 +26,21 @@ func (s *StaplerHandler) Protocol(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	sendRequest := ProtocolRequest{}
-	if err := json.Unmarshal(body, &sendRequest); err != nil {
+	pRec := ProtocolRequest{}
+	if err := json.Unmarshal(body, &pRec); err != nil {
 		logger.L.Errorln("error while collecting records", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	data, err := s.Make(req.Context(), &sendRequest)
+
+	data, err := s.Make(req.Context(), &pRec)
 	if err != nil {
 		logger.L.Error(err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	s.Send(req.Context(), data, sendRequest.Users)
-	logger.L.Info("successfully send protocol")
+	s.Send(req.Context(), data, pRec.Users)
 
 	res.WriteHeader(http.StatusNoContent)
 }
