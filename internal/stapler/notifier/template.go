@@ -9,10 +9,6 @@ import (
 	"protocall/pkg/logger"
 )
 
-var (
-	notifyMessage *template.Template
-)
-
 const (
 	subject = "Протокол вашей встречи"
 
@@ -81,9 +77,7 @@ const (
 `
 )
 
-func init() {
-	notifyMessage = template.Must(template.New("base").Parse(body))
-}
+var notifyMessage = template.Must(template.New("base").Parse(body))
 
 func render(phrases []stapler.Phrase) string {
 	res := &bytes.Buffer{}

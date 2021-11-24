@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"protocall/internal/connector/application/applications"
 	"protocall/internal/connector/domain/entity"
 	"protocall/internal/connector/domain/repository"

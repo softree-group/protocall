@@ -15,7 +15,7 @@ type Phrase struct {
 
 const Delimeter = `|`
 
-func parse(raw string) ([]Phrase, error) {
+func newPhrase(raw string) ([]Phrase, error) {
 	scanner := bufio.NewScanner(strings.NewReader(raw))
 	scanner.Split(bufio.ScanLines)
 	res := []Phrase{}
