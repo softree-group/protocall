@@ -54,8 +54,6 @@ func (a *ApplicationEventListener) handleStartRecordEvent(event interface{}) {
 	data.User = user
 	data.ConferenceID = user.ConferenceID
 
-	fmt.Println("START PATH", data.Record.Path)
-
 	a.reps.Store(user.ConferenceID, data.Record.Path)
 }
 

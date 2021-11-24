@@ -21,8 +21,6 @@ func NewNotifier(mail Runner) *Notifier {
 }
 
 func (n *Notifier) Send(ctx context.Context, protocol []stapler.Phrase, users []stapler.User) {
-	fmt.Printf("USERS %+v", users)
-	fmt.Println("PROTOCOL", protocol)
 	for _, user := range users {
 		if user.NeedProtocol {
 			fmt.Println(render(protocol))
