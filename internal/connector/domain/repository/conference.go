@@ -14,7 +14,7 @@ type Conference interface {
 }
 
 type ConferenceStorage interface {
-	UploadRecord(ctx context.Context, path string) error
+	UploadRecord(ctx context.Context, path string) (string, error)
 }
 
 type ConferenceTranslator interface {

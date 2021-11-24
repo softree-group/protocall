@@ -3,9 +3,9 @@ package translator
 import (
 	"net/http"
 
-	"protocall/pkg/web"
+	"protocall/pkg/webcore"
 )
 
 func InitRouter(mux *http.ServeMux, h *TranslatorHandler) {
-	mux.HandleFunc("/translations", web.ApplyMethods(h.Translate, "POST"))
+	mux.HandleFunc("/translations", webcore.ApplyMethods(h.Translate, "POST"))
 }

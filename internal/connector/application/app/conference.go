@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -30,6 +31,8 @@ type Conference struct {
 	ari  ari.Client
 	bus  services.Bus
 }
+
+var regexTime = regexp.MustCompile(`(\d+).wav`)
 
 func NewConference(reps repository.Repositories, ariClient ari.Client, bus services.Bus) *Conference {
 	return &Conference{
@@ -156,8 +159,12 @@ func (c *Conference) Delete(meetID string) {
 	c.reps.DeleteConference(meetID)
 }
 
-func (c *Conference) TranslateRecord(user *entity.User, recordPath string) error {
-	connTime, err := strconv.ParseInt(strings.Split(recordPath, "/")[0], 10, 64)
+func (c *Conference) TranslateRecord(user *entity.User, record *entity.Record) error {
+	match := regexTime.FindStringSubmatch(record.URI)
+	if len(match) < 2 {
+		return fmt.Errorf("invalid pattern recordPath: %s", record.URI)
+	}
+	connTime, err := strconv.ParseInt(match[1], 10, 64)
 	if err != nil {
 		return err
 	}
@@ -167,8 +174,12 @@ func (c *Conference) TranslateRecord(user *entity.User, recordPath string) error
 			Username:    user.Username,
 			ConnectTime: time.Unix(connTime, 0),
 			SessionID:   user.SessionID,
-			Record:      recordPath,
-			Text:        strings.Replace(recordPath, ".wav", ".txt", -1),
+			Record: translator.Record{
+				URI:    record.URI,
+				Length: record.Length,
+				Path:   record.Path,
+			},
+			Text: strings.Replace(record.Path, ".wav", ".txt", -1),
 		},
 	}); err != nil {
 		logrus.Error(err)
@@ -177,11 +188,12 @@ func (c *Conference) TranslateRecord(user *entity.User, recordPath string) error
 	return nil
 }
 
-func (c *Conference) UploadRecord(path string) error {
-	if err := c.reps.UploadRecord(context.TODO(), path); err != nil {
-		return err
+func (c *Conference) UploadRecord(path string) (string, error) {
+	url, err := c.reps.UploadRecord(context.TODO(), path)
+	if err != nil {
+		return "", err
 	}
-	return nil
+	return url, nil
 }
 
 func (c *Conference) CreateProtocol(conference *entity.Conference) error {
@@ -192,20 +204,16 @@ func (c *Conference) CreateProtocol(conference *entity.Conference) error {
 				return false
 			}
 
-			user := stapler.User{}
-
 			participant, ok := i.(*entity.User)
 			if !ok {
 				return false
 			}
-
-			if participant.Email != "" {
-				user.Email = participant.Email
-			}
+			user := stapler.User{}
+			user.Email = participant.Email
+			user.NeedProtocol = participant.NeedProtocol
 			user.Records = participant.Records
 			user.Texts = participant.Texts
 			user.Username = participant.Username
-
 			users = append(users, user)
 			return true
 		},

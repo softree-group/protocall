@@ -1,20 +1,33 @@
 package translator
 
 import (
-	"protocall/pkg/recognizer"
 	"time"
+
+	"protocall/pkg/yastt"
 )
 
+type Record struct {
+	URI    string        `json:"uri"`
+	Path   string        `json:"path"`
+	Length time.Duration `json:"length"`
+}
+
 type User struct {
-	Username    string    `json:"username" binding:"required"`
-	ConnectTime time.Time `json:"join_time" binding:"required"`
-	SessionID   string    `json:"session_id binding:"required"`
-	Record      string    `json:"record" binding:"required"`
-	Text        string    `json:"text" binding:"required"`
+	Username    string    `json:"username"`
+	ConnectTime time.Time `json:"join_time"`
+	SessionID   string    `json:"session_id"`
+	Record      Record    `json:"record"`
+	Text        string    `json:"text"`
 }
 
 type TranslateRequest struct {
-	User `json:"user" binding:"required"`
+	User `json:"user"`
 }
 
-type TranslateRespone = recognizer.TextRespone
+type TranslateRespone = yastt.Chunk
+
+type ConnectorRequest struct {
+	SessionID string `json:"session_id"`
+	Record    Record `json:"record"`
+	Text      string `json:"text"`
+}

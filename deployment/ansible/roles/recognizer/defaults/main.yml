@@ -1,5 +1,0 @@
----
-container_name: recognizer
-image: alphacep/kaldi-ru
-src_port: 2700
-dest_port: 2700

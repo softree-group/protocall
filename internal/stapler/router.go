@@ -3,9 +3,9 @@ package stapler
 import (
 	"net/http"
 
-	"protocall/pkg/web"
+	"protocall/pkg/webcore"
 )
 
 func InitRouter(mux *http.ServeMux, h *StaplerHandler) {
-	mux.HandleFunc("/protocols", web.ApplyMethods(h.Protocol, "POST"))
+	mux.HandleFunc("/protocols", webcore.ApplyMethods(h.Protocol, "POST"))
 }

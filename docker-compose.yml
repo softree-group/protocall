@@ -20,9 +20,12 @@ services:
     image: clerk
     command: ["-f", "/app/clerk.yml"]
     environment:
-      - ACCESS_KEY
-      - SECRET_KEY
+      - BUCKET_ACCESS_KEY
+      - BUCKET_SECRET_KEY
       - EMAIL_KEY
+      - CONNECTOR_KEY
+      - YASTT_ACCESS_KEY
+      - YASTT_SECRET_KEY
     volumes:
       - ${PWD}/clerk.yml:/app/clerk.yml
     ports:
@@ -31,8 +34,6 @@ services:
       - protocall
   frontend:
     image: nginx:latest
-    environment:
-      - REACT_APP_DEBUG=1
     volumes:
       - ${PWD}/certs:/certs
       - ${PWD}/static:/var/www/html

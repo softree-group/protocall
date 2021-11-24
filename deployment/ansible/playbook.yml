@@ -4,9 +4,3 @@
   become: true
   roles:
     - porter
-
-# - name: Deploy recognizer
-#   hosts: recognizer
-#   become: true
-#   roles:
-#     - recognizer

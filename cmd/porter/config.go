@@ -7,16 +7,16 @@ import (
 
 	"protocall/pkg/logger"
 	"protocall/pkg/s3"
-	"protocall/pkg/web"
+	"protocall/pkg/webcore"
 
 	"gopkg.in/yaml.v2"
 )
 
 type config struct {
-	Server  web.ServerConfig    `yaml:"server"`
-	Storage s3.StorageConfig    `yaml:"s3"`
-	Logger  logger.LoggerConfig `yaml:"log"`
-	Root    string              `yaml:"root"`
+	Server  webcore.ServerConfig `yaml:"server"`
+	Storage s3.StorageConfig     `yaml:"s3"`
+	Logger  logger.LoggerConfig  `yaml:"log"`
+	Root    string               `yaml:"root"`
 }
 
 var (

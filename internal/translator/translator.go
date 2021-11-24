@@ -3,20 +3,16 @@ package translator
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"time"
 
+	"protocall/internal/stapler"
 	"protocall/pkg/logger"
 )
 
-var (
-	errGetObject = errors.New("error while getting object from storage")
-)
-
 type Recognizer interface {
-	Recognize(context.Context, io.Reader) <-chan TranslateRespone
+	Recognize(ctx context.Context, filename string, length time.Duration) (<-chan TranslateRespone, <-chan error)
 }
 
 type Storage interface {
@@ -25,7 +21,7 @@ type Storage interface {
 }
 
 type Connector interface {
-	TranslationDone(context.Context, *TranslateRequest) error
+	TranslationDone(context.Context, *ConnectorRequest) error
 }
 
 type Translator struct {
@@ -34,59 +30,73 @@ type Translator struct {
 	connector  Connector
 }
 
-func NewTranslator(r Recognizer, s Storage) *Translator {
+func NewTranslator(r Recognizer, s Storage, c Connector) *Translator {
 	return &Translator{
 		storage:    s,
 		recognizer: r,
+		connector:  c,
 	}
-}
-
-func (t *Translator) processAudio(ctx context.Context, req *TranslateRequest) error {
-	audio, err := t.storage.GetObject(ctx, req.User.Record)
-	if err != nil {
-		return err
-	}
-	defer audio.Close()
-
-	phrase := func(req *TranslateRequest, resp *TranslateRespone) string {
-		if resp.Text == "" {
-			return ""
-		}
-
-		return fmt.Sprintf(
-			"%v:%v:%v\n",
-			req.ConnectTime.Add(time.Duration(resp.Result[0].Start*float64(time.Second))),
-			req.User.Username,
-			resp.Text,
-		)
-	}
-
-	w := bytes.NewBuffer([]byte{})
-	for text := range t.recognizer.Recognize(ctx, audio) {
-		fmt.Fprint(w, phrase(req, &text))
-	}
-
-	if err := t.storage.PutObject(
-		ctx,
-		req.User.Text,
-		bytes.NewReader(w.Bytes()),
-	); err != nil {
-		return fmt.Errorf("%w: %v", errGetObject, err)
-	}
-
-	return nil
 }
 
 func (t *Translator) Translate(req *TranslateRequest) {
 	go func() {
-		if err := t.processAudio(context.Background(), req); err != nil {
-			logger.L.Error("error while process record: ", req.User.Record)
+		ctx := context.Background()
+		w := bytes.NewBuffer([]byte{})
+		chunk, err := t.recognizer.Recognize(ctx, req.Record.URI, req.Record.Length)
+		if err := func() error {
+			for {
+				select {
+				case data := <-chunk:
+					if len(data.Alternatives) == 0 {
+						return nil
+					}
+
+					chunk := data.Alternatives[0]
+					if chunk.Text == "" {
+						return nil
+					}
+
+					offset, err := time.ParseDuration(chunk.Words[0].StartTime)
+					if err != nil {
+						return err
+					}
+
+					fmt.Fprintf(w, "%v%s%v%s%v\n",
+						req.ConnectTime.Add(offset).Format(time.RFC850),
+						stapler.Delimeter,
+						req.User.Username,
+						stapler.Delimeter,
+						chunk.Text,
+					)
+				case err := <-err:
+					return err
+				}
+			}
+		}(); err != nil {
+			logger.L.Error(err)
 			return
 		}
-		logger.L.Info("Translation done: ", req.User.Text)
-		if err := t.connector.TranslationDone(context.Background(), req); err != nil {
-			logger.L.Errorln("error while notify connector: ", err)
+
+		if err := t.storage.PutObject(
+			ctx,
+			req.Text,
+			bytes.NewReader(w.Bytes()),
+		); err != nil {
+			logger.L.Errorf("%w: %v", "error while getting object from storage", err)
+			return
 		}
-		logger.L.Info("Connector successfully notified: ", req.User.SessionID)
+
+		if err := t.connector.TranslationDone(context.Background(), &ConnectorRequest{
+			SessionID: req.SessionID,
+			Text:      req.Text,
+			Record: Record{
+				URI:  req.Record.URI,
+				Path: req.Record.Path,
+			},
+		}); err != nil {
+			logger.L.Errorln("error while notify connector: ", err)
+			return
+		}
+		logger.L.Info("Connector successfully notified")
 	}()
 }

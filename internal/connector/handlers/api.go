@@ -19,7 +19,7 @@ func ServeAPI(apps *application.Applications) {
 		method func(string, fasthttp.RequestHandler),
 		path string,
 		handler func(ctx *fasthttp.RequestCtx, applications *application.Applications),
-		middleWare func (next fasthttp.RequestHandler) fasthttp.RequestHandler,
+		middleWare func(next fasthttp.RequestHandler) fasthttp.RequestHandler,
 	) {
 		if middleWare == nil {
 			middleWare = fishMiddleware

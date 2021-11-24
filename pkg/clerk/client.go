@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -88,7 +89,11 @@ func (c *ClerkClient) CreateProtocol(ctx context.Context, data *stapler.Protocol
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
-		return errTranslate
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("%w: %s", errTranslate, data)
 	}
 
 	return nil

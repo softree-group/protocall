@@ -11,6 +11,6 @@ type StorageConfig struct {
 }
 
 func ApplySecrets(cfg *StorageConfig) {
-	cfg.AccessKey = os.Getenv("ACCESS_KEY")
-	cfg.SecretKey = os.Getenv("SECRET_KEY")
+	cfg.AccessKey = os.Getenv("BUCKET_ACCESS_KEY")
+	cfg.SecretKey = os.Getenv("BUCKET_SECRET_KEY")
 }

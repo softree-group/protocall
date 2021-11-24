@@ -7,7 +7,6 @@ require (
 	github.com/fasthttp/router v1.4.3
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/btree v1.0.0
-	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/go-uuid v1.0.1
 	github.com/heltonmarx/goami v1.0.1-0.20211007112051-e5aeb6b4a015
 	github.com/lab259/cors v0.2.0
@@ -27,7 +26,7 @@ require (
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/google/uuid v1.3.0 // indirect
+	github.com/google/uuid v1.3.0
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/log15 v0.0.0-20171019012758-0decfc6c20d9 // indirect
 	github.com/json-iterator/go v1.1.11 // indirect

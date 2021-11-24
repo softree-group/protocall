@@ -2,6 +2,7 @@ package stapler
 
 import (
 	"bufio"
+	"fmt"
 	"strings"
 	"time"
 )
@@ -12,19 +13,21 @@ type Phrase struct {
 	Text string
 }
 
-func parseString(raw string) []Phrase {
+const Delimeter = `|`
+
+func newPhrase(raw string) ([]Phrase, error) {
 	scanner := bufio.NewScanner(strings.NewReader(raw))
 	scanner.Split(bufio.ScanLines)
 	res := []Phrase{}
 	for scanner.Scan() {
-		line := strings.Split(scanner.Text(), ":")
+		line := strings.Split(scanner.Text(), Delimeter)
 		if len(line) < 2 {
-			return nil
+			return nil, fmt.Errorf("invalid line format")
 		}
 
-		time, err := time.Parse(time.RFC3339, line[0])
+		time, err := time.Parse(time.RFC850, line[0])
 		if err != nil {
-			return nil
+			return nil, err
 		}
 
 		res = append(res, Phrase{
@@ -33,5 +36,5 @@ func parseString(raw string) []Phrase {
 			Text: line[2],
 		})
 	}
-	return res
+	return res, nil
 }

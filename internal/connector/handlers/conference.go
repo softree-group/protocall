@@ -7,6 +7,7 @@ import (
 
 	"protocall/internal/connector/application"
 	"protocall/internal/connector/domain/entity"
+	"protocall/internal/translator"
 
 	"github.com/google/btree"
 	"github.com/sirupsen/logrus"
@@ -101,6 +102,8 @@ func ready(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 }
 
 func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
+	defer ctx.Response.Header.DelCookie(sessionCookie)
+
 	user := getUser(ctx, apps)
 	if user == nil {
 		ctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -120,8 +123,6 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		ConferenceID: user.ConferenceID,
 		User:         user,
 	})
-
-	ctx.Response.Header.DelCookie(sessionCookie)
 }
 
 func record(ctx *fasthttp.RequestCtx, apps *application.Applications) {
@@ -209,13 +210,26 @@ func info(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 }
 
 func translate(ctx *fasthttp.RequestCtx, apps *application.Applications) {
-	var sessionID string
-	err := json.Unmarshal(ctx.PostBody(), sessionID)
-	if err != nil {
-		logrus.Error(err.Error())
-		ctx.Error(err.Error(), http.StatusInternalServerError)
+	data := translator.ConnectorRequest{}
+	if err := json.Unmarshal(ctx.PostBody(), &data); err != nil {
+		ctx.Response.SetStatusCode(http.StatusBadRequest)
+		return
 	}
 
-	apps.Bus.Publish("/translated", apps.User.Find(sessionID))
+	user := apps.User.Find(data.SessionID)
+	if user == nil {
+		ctx.Response.SetStatusCode(http.StatusInternalServerError)
+		return
+	}
+
+	apps.Bus.Publish("translated", entity.EventDefault{
+		ConferenceID: user.ConferenceID,
+		User:         user,
+		Text:         data.Text,
+		Record: &entity.Record{
+			Path: data.Record.Path,
+			URI:  data.Record.URI,
+		},
+	})
 	ctx.Response.SetStatusCode(http.StatusNoContent)
 }

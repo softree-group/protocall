@@ -49,7 +49,9 @@ func (s *Snoopy) channelHandler(channel *ari.ChannelHandle, recordPath string, s
 	ctx := context.Background()
 	rec := record.Record(ctx, channel)
 	s.bus.Publish("startRecord", entity.EventDefault{
-		RecName: recordPath,
+		Record: &entity.Record{
+			Path: recordPath,
+		},
 		User: &entity.User{
 			SessionID: sessionID,
 		},
@@ -71,14 +73,15 @@ func (s *Snoopy) channelHandler(channel *ari.ChannelHandle, recordPath string, s
 			}
 
 			s.bus.Publish("saved", entity.EventDefault{
-				RecName: recordPath,
-				Duration: time.Since(startedTime),
+				Record: &entity.Record{
+					Path:   recordPath,
+					Length: time.Since(startedTime),
+				},
 				User: &entity.User{
 					SessionID: sessionID,
 				},
 			})
 			logrus.Info("saved record for ", channel.ID())
-
 			return
 		}
 	}
