@@ -64,7 +64,6 @@ const (
         .message_time {
             font-weight: 200;
         }
-
     </style>
 	<body>
 		<h1>Протокол вашей конференции от {{.Time.Format "02.01"}}.</h1>
@@ -78,23 +77,6 @@ const (
 			</div>
 		{{end}}
         </body>
-</html>
-
-
-<!DOCTYPE html>
-<html>
-	<head>
-		<title>Protocall</title>
-		<meta charset="utf-8">
-	</head>
-	<body>
-		<h1>Протокол вашей конференции.</h1>
-			<div class="message">
-				<p class="message_text"></p>
-				<span class="message_user"></span>
-				<span class="message_time"></span>
-			</div>
-	</body>
 </html>
 `
 )
