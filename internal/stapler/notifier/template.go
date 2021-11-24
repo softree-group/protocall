@@ -16,12 +16,12 @@ const (
 	subject = "Протокол вашей встречи"
 
 	body = `
-<h1>Cтенограмма вашей конференции.</h1>
+<h1>Протокол вашей конференции.</h1>
 {{range $phrase := .Phrases}}
 	<div class="message">
-		<p>{{$phrase.Text}}</p>
-		<p>Пользователь {{$phrase.User}}</p>
-		<p>Время {{$phrase.Time.Format "15:04"}}</p>
+		<p class="message_text">{{$phrase.Text}}</p>
+		<span class="message_user">{{$phrase.User}}</span>
+		<span class="message_time">{{$phrase.Time.Format "15:04"}}</span>
 	</div>
 {{end}}
 `
