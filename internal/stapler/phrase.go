@@ -20,7 +20,6 @@ func parse(raw string) ([]Phrase, error) {
 	scanner.Split(bufio.ScanLines)
 	res := []Phrase{}
 	for scanner.Scan() {
-		fmt.Println(scanner.Text())
 		line := strings.Split(scanner.Text(), Delimeter)
 		if len(line) < 2 {
 			return nil, fmt.Errorf("invalid line format")

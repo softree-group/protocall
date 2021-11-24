@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"protocall/internal/connector/application/applications"
 	"protocall/internal/connector/domain/entity"
 	"protocall/internal/connector/domain/repository"
@@ -53,8 +52,6 @@ func (a *ApplicationEventListener) handleStartRecordEvent(event interface{}) {
 
 	data.User = user
 	data.ConferenceID = user.ConferenceID
-
-	fmt.Println("START PATH", data.Record.Path)
 
 	a.reps.Store(user.ConferenceID, data.Record.Path)
 }
