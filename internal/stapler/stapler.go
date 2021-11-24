@@ -38,7 +38,7 @@ func (s *Stapler) Protocol(ctx context.Context, req *ProtocolRequest) error {
 				return err
 			}
 
-			parsed, err := parse(string(raw))
+			parsed, err := newPhrase(string(raw))
 			if err != nil {
 				return err
 			}
