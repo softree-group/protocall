@@ -25,7 +25,7 @@ func (m *Mailer) Send(ctx context.Context, mimeType, subject, body string, to st
 	newMsg.SetHeader("Subject", subject)
 	newMsg.SetBody(mimeType, body)
 
-	if err := m.client.DialAndSend(); err != nil {
+	if err := m.client.DialAndSend(newMsg); err != nil {
 		return err
 	}
 
