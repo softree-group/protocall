@@ -24,7 +24,7 @@ const (
 func createCookie() *fasthttp.Cookie {
 	token, _ := uuid.GenerateUUID()
 
-	authCookie := fasthttp.Cookie{}
+	authCookie := fasthttp.AcquireCookie()
 	authCookie.SetKey(sessionCookie)
 	authCookie.SetValue(token)
 	authCookie.SetDomain(viper.GetString(config.ServerDomain))
@@ -33,7 +33,15 @@ func createCookie() *fasthttp.Cookie {
 	authCookie.SetHTTPOnly(true)
 	authCookie.SetSameSite(fasthttp.CookieSameSiteLaxMode)
 	authCookie.SetSecure(false)
-	return &authCookie
+	return authCookie
+}
+
+func deleteCookie(ctx *fasthttp.RequestCtx) {
+	cookie := createCookie()
+	defer fasthttp.ReleaseCookie(cookie)
+
+	cookie.SetExpire(time.Now().Add(-day * 24))
+	ctx.Response.Header.SetCookie(cookie)
 }
 
 func createCentToken(id string) string {
@@ -57,7 +65,7 @@ func session(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 
 	user := apps.User.Find(string(sessionID))
 	if user == nil {
-		ctx.Response.Header.DelCookie(sessionCookie)
+		deleteCookie(ctx)
 		ctx.SetStatusCode(http.StatusNoContent)
 		return
 	}
@@ -66,7 +74,7 @@ func session(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	if account == nil {
 		account = apps.AsteriskAccount.GetFree()
 		if account == nil {
-			ctx.Response.Header.DelCookie(sessionCookie)
+			deleteCookie(ctx)
 			ctx.Error("Sorry, we are busy ;(", fasthttp.StatusServiceUnavailable)
 			// TODO: wait free account
 			return
@@ -75,7 +83,7 @@ func session(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 
 	conference := apps.Conference.Get(user.ConferenceID)
 	if conference == nil {
-		ctx.Response.Header.DelCookie(sessionCookie)
+		deleteCookie(ctx)
 		ctx.SetStatusCode(http.StatusNoContent)
 		return
 	}
@@ -105,6 +113,8 @@ func createSession(ctx *fasthttp.RequestCtx, apps *application.Applications) (*e
 	}
 
 	cookie := createCookie()
+	defer fasthttp.ReleaseCookie(cookie)
+
 	ctx.Response.Header.SetCookie(cookie)
 
 	user.SessionID = string(cookie.Value())

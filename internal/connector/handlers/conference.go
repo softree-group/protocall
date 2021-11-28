@@ -102,7 +102,8 @@ func ready(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 }
 
 func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
-	defer ctx.Response.Header.DelCookie(sessionCookie)
+
+	defer deleteCookie(ctx)
 
 	user := getUser(ctx, apps)
 	if user == nil {
