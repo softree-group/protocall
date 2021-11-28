@@ -9,16 +9,16 @@ import (
 )
 
 const (
-	subject = "Протокол вашей встречи"
-
-	body = `
+	subject    = "Протокол вашей встречи"
+	errMessage = "Данных нет"
+	body       = `
 <!DOCTYPE html>
 <html>
 	<head>
 		<title>Protocall</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-    	<meta name="theme-color" content="#282c34" />
+		<meta name="theme-color" content="#282c34" />
 	</head>
 	<body style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; background: #282c34; font-size: 16px;">
 		<h1 style="font-size: 21px; color: gainsboro; margin: 10px;">Протокол вашей конференции от {{(index .Phrases 0).Time.Format "02.01"}}.</h1>
@@ -46,7 +46,7 @@ func render(phrases []stapler.Phrase) string {
 		Phrases: phrases,
 	}); err != nil {
 		logger.L.Error(err)
-		return ""
+		return errMessage
 	}
 	return res.String()
 }

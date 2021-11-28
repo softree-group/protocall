@@ -172,7 +172,7 @@ func (c *Conference) TranslateRecord(user *entity.User, record *entity.Record) e
 	if err := c.reps.TranslateRecord(context.TODO(), &translator.TranslateRequest{
 		User: translator.User{
 			Username:    user.Username,
-			ConnectTime: time.Unix(connTime, 0),
+			ConnectTime: time.Unix(connTime, 0).Add(time.Hour * 3),
 			SessionID:   user.SessionID,
 			Record: translator.Record{
 				URI:    record.URI,
