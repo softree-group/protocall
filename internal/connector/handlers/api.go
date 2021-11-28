@@ -39,6 +39,7 @@ func ServeAPI(apps *application.Applications) {
 	compose(r.POST, "/conference/leave", leave, nil)
 	compose(r.POST, "/conference/ready", ready, nil)
 	compose(r.GET, "/conference", info, nil)
+	compose(r.POST, "/media", media, nil)
 	compose(r.POST, "/translates", translate, authRequired)
 
 	startServer(r)

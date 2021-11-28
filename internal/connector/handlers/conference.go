@@ -126,6 +126,27 @@ func leave(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	})
 }
 
+type mediaRequest struct {
+	AudioMuted bool `json:"audioMuted"`
+	VideoMuted bool `json:"videoMuted"`
+}
+
+func media(ctx *fasthttp.RequestCtx, apps *application.Applications) {
+	user := getUser(ctx, apps)
+	if user == nil {
+		ctx.SetStatusCode(fasthttp.StatusBadRequest)
+		return
+	}
+
+	var request mediaRequest
+	_ = json.Unmarshal(ctx.PostBody(), &request)
+
+	user.VideoMuted = request.VideoMuted
+	user.AudioMuted = request.AudioMuted
+
+	apps.User.Save(user)
+}
+
 func record(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 	user := getUser(ctx, apps)
 	if user == nil {
@@ -144,9 +165,11 @@ func record(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 }
 
 type UserInfo struct {
-	Name    string `json:"name"`
-	ID      string `json:"id"`
-	Channel string `json:"channel"`
+	Name       string `json:"name"`
+	ID         string `json:"id"`
+	Channel    string `json:"channel"`
+	AudioMuted bool   `json:"audioMuted"`
+	VideoMuted bool   `json:"videoMuted"`
 }
 
 type ConferenceInfo struct {
@@ -196,9 +219,11 @@ func info(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 			channel = user.Channel.ID
 		}
 		participants = append(participants, UserInfo{
-			Name:    user.Username,
-			ID:      user.AsteriskAccount,
-			Channel: channel,
+			Name:       user.Username,
+			ID:         user.AsteriskAccount,
+			Channel:    channel,
+			AudioMuted: user.AudioMuted,
+			VideoMuted: user.VideoMuted,
 		})
 		return true
 	})

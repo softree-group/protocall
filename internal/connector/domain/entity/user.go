@@ -15,6 +15,8 @@ type User struct {
 	Channel         *ari.Key `json:"-"`
 	ConferenceID    string   `json:"conference_id"`
 	NeedProtocol    bool     `json:"need_protocol"`
+	AudioMuted      bool     `json:"audioMuted"`
+	VideoMuted      bool     `json:"videoMuted"`
 	Records         []string
 	Texts           []string
 }
@@ -29,9 +31,11 @@ func (u User) MarshalJSON() ([]byte, error) {
 		channel = u.Channel.ID
 	}
 	return json.Marshal(&map[string]interface{}{
-		"name":    u.Username,
-		"email":   u.Email,
-		"id":      u.AsteriskAccount,
-		"channel": channel,
+		"name":       u.Username,
+		"email":      u.Email,
+		"id":         u.AsteriskAccount,
+		"channel":    channel,
+		"audioMuted": u.AudioMuted,
+		"videoMuted": u.VideoMuted,
 	})
 }

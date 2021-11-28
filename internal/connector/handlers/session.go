@@ -104,7 +104,10 @@ func createSession(ctx *fasthttp.RequestCtx, apps *application.Applications) (*e
 		return nil, nil
 	}
 
-	user := &entity.User{}
+	user := &entity.User{
+		AudioMuted: true,
+		VideoMuted: true,
+	}
 
 	err := json.Unmarshal(ctx.PostBody(), user)
 	if err != nil {
