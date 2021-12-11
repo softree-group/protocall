@@ -1,9 +1,0 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: connector
-spec:
-  spec:
-    containers:
-      - name: connector
-        imagePullPolicy: Always

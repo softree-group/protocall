@@ -6,7 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type LoggerConfig struct {
+type Config struct {
 	OutputPath string `yaml:"logOutput"`
 	LogLevel   string `yaml:"logLevel"`
 }
@@ -15,7 +15,7 @@ type Logger = logrus.Logger
 
 var L *Logger
 
-func NewLogger(c *LoggerConfig) error {
+func NewLogger(c *Config) error {
 	L = logrus.New()
 
 	L.SetOutput(os.Stdout)

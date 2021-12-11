@@ -1,6 +1,0 @@
----
-- name: Deploy porter
-  hosts: asterisk
-  become: true
-  roles:
-    - porter

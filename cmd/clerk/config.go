@@ -1,8 +1,6 @@
 package main
 
 import (
-	"flag"
-	"log"
 	"os"
 
 	"protocall/pkg/connector"
@@ -15,38 +13,24 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type config struct {
+type Config struct {
 	Server     webcore.ServerConfig            `yaml:"server"`
-	Logger     logger.LoggerConfig             `yaml:"log"`
+	Logger     logger.Config                   `yaml:"log"`
 	Recognizer yastt.YasttConfig               `yaml:"yastt"`
 	Connector  connector.ConnectorClientConfig `yaml:"connector"`
 	Storage    s3.StorageConfig                `yaml:"s3"`
 	Mailer     mailer.MailerConfig             `yaml:"smtp"`
 }
 
-var (
-	configPath = flag.String("f", "", "path to configuration file")
-)
-
-func parseConfig() *config {
-	flag.Parse()
-	if *configPath == "" {
-		flag.Usage()
-		log.Fatalln("need to specify path to config")
-	}
-	data, err := os.ReadFile(*configPath)
+func config(path string) (*Config, error) {
+	data, err := os.ReadFile(path)
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
 
-	config := &config{}
+	config := &Config{}
 	if err = yaml.Unmarshal(data, config); err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
-
-	s3.ApplySecrets(&config.Storage)
-	mailer.ApplySecrets(&config.Mailer)
-	connector.ApplySecrets(&config.Connector)
-	yastt.ApplySecrets(&config.Recognizer)
-	return config
+	return config, nil
 }

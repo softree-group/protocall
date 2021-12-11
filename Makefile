@@ -1,4 +1,3 @@
-VERSION := 0.1.1
 REGISTRY := ghcr.io/softree-group/protocall-connector
 
 all: clerk connector
@@ -14,7 +13,7 @@ clerk:
 		.
 
 .PHONY: push-clerk
-push-clerk:
+push-clerk: clerk
 	docker push $(REGISTRY)/clerk:$(VERSION)
 
 .PHONY: connector
@@ -28,5 +27,8 @@ connector:
 		.
 
 .PHONY: push-connector
-push-connector:
+push-connector: connector
 	docker push $(REGISTRY)/connector:$(VERSION)
+
+.PHONY: push
+push: push-connector push-clerk

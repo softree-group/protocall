@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 
@@ -9,8 +10,22 @@ import (
 	"protocall/pkg/webcore"
 )
 
+var (
+	configPath = flag.String("f", "", "path to configuration file")
+)
+
 func main() {
-	cfg := parseConfig()
+	flag.Parse()
+	if *configPath == "" {
+		flag.Usage()
+		log.Fatalf("need to specify path to config")
+	}
+
+	cfg, err := config(*configPath)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	logger.NewLogger(&cfg.Logger)
 
 	storage, err := s3.NewStorage(&cfg.Storage)

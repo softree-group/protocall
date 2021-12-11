@@ -2,21 +2,16 @@ version: '3.9'
 services:
   connector:
     build:
-      dockerfile: build/connector.Dockerfile
-      args:
-        - IMAGE=connector
+      dockerfile: cmd/connector/Dockerfile
     image: connector
-    command: ["-s", "/app/config.yml"]
+    command: ["-f", "/app/config.yml"]
     volumes:
-      - ${PWD}/accounts.json:/app/accounts.json
       - ${PWD}/connector.yml:/app/config.yml
     networks:
       - protocall
   clerk:
     build:
-      dockerfile: build/clerk.Dockerfile
-      args:
-       - IMAGE=clerk
+      dockerfile: cmd/clerk/Dockerfile
     image: clerk
     command: ["-f", "/app/clerk.yml"]
     environment:
@@ -51,5 +46,14 @@ services:
       - protocall
     volumes:
       - ${PWD}/centrifugo.json:/centrifugo.json
+  redis:
+    image: redis
+    command: ["redis-server", "--save", "60", "1"]
+    networks:
+      - protocall
+    volumes:
+      - redis:/data
 networks:
   protocall:
+volumes:
+  redis:

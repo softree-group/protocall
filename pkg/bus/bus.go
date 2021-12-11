@@ -3,9 +3,13 @@ package bus
 import (
 	"sync"
 
-	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
+	"github.com/hashicorp/go-uuid"
 )
+
+type Client interface {
+	Subscribe(event string) *Subscriber
+	Publish(event string, data interface{})
+}
 
 type Bus struct {
 	subscribers map[string][]*Subscriber
@@ -23,9 +27,15 @@ func (b Bus) Subscribe(event string) *Subscriber {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 
-	sub := &Subscriber{event: event, C: make(chan interface{}), clear: func() {
-		b.clear(event)
-	}, uid: uuid.NewString()}
+	uuid, _ := uuid.GenerateUUID()
+	sub := &Subscriber{
+		event: event,
+		C:     make(chan interface{}),
+		clear: func() {
+			b.clear(event)
+		},
+		uid: uuid,
+	}
 	subs := b.subscribers[event]
 	b.subscribers[event] = append(subs, sub)
 
@@ -46,12 +56,10 @@ func (b Bus) Publish(event string, data interface{}) {
 }
 
 func (b *Bus) clear(event string) {
-	logrus.Info("clear ", event)
 	b.lock.Lock()
 	defer b.lock.Unlock()
 
 	subs := b.subscribers[event]
-	logrus.Infof("SUBS: %+v", subs)
 	if len(subs) == 0 {
 		return
 	}
@@ -70,8 +78,4 @@ func (b *Bus) clear(event string) {
 	}
 
 	b.subscribers[event] = notNilSubs
-
-	logrus.Infof("AFTER CLEAR SUBS: %+v", b.subscribers[event])
 }
-
-var _ *Bus = &Bus{}

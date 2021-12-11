@@ -1,8 +1,6 @@
 package main
 
 import (
-	"flag"
-	"log"
 	"os"
 
 	"protocall/pkg/logger"
@@ -12,34 +10,22 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type config struct {
+type Config struct {
 	Server  webcore.ServerConfig `yaml:"server"`
 	Storage s3.StorageConfig     `yaml:"s3"`
-	Logger  logger.LoggerConfig  `yaml:"log"`
+	Logger  logger.Config        `yaml:"log"`
 	Root    string               `yaml:"root"`
 }
 
-var (
-	configPath = flag.String("f", "", "path to configuration file")
-)
-
-func parseConfig() *config {
-	flag.Parse()
-	if *configPath == "" {
-		flag.Usage()
-		log.Fatalf("need to specify path to config")
-	}
-
-	data, err := os.ReadFile(*configPath)
+func config(path string) (*Config, error) {
+	data, err := os.ReadFile(path)
 	if err != nil {
-		log.Fatalf("cannot read configuration: %v", err)
+		return nil, err
 	}
 
-	config := &config{}
+	config := &Config{}
 	if err = yaml.Unmarshal(data, config); err != nil {
-		log.Fatalf("cannot parse configuration: %v", err)
+		return nil, err
 	}
-
-	s3.ApplySecrets(&config.Storage)
-	return config
+	return config, nil
 }

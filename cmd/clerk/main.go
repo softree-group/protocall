@@ -1,9 +1,11 @@
 package main
 
 import (
+	"flag"
+	"log"
 	"net/http"
 
-	"protocall/internal/notifier"
+	"protocall/internal/postman"
 	"protocall/internal/stapler"
 	"protocall/internal/translator"
 	"protocall/pkg/connector"
@@ -14,8 +16,22 @@ import (
 	"protocall/pkg/yastt"
 )
 
+var (
+	configPath = flag.String("f", "", "path to configuration file")
+)
+
 func main() {
-	cfg := parseConfig()
+	flag.Parse()
+	if *configPath == "" {
+		flag.Usage()
+		log.Fatalln("need to specify path to config")
+	}
+
+	cfg, err := config(*configPath)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	logger.NewLogger(&cfg.Logger)
 
 	storage, err := s3.NewStorage(&cfg.Storage)
@@ -41,7 +57,7 @@ func main() {
 		mux,
 		&stapler.StaplerHandler{
 			stapler.NewStapler(storage),
-			notifier.NewNotifier(mailer.NewMailer(&cfg.Mailer)),
+			postman.NewPostman(mailer.NewMailer(&cfg.Mailer)),
 		},
 	)
 

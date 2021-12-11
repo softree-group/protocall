@@ -1,7 +1,5 @@
 package bus
 
-import "github.com/sirupsen/logrus"
-
 type Subscriber struct {
 	C     chan interface{}
 	clear func()
@@ -10,7 +8,6 @@ type Subscriber struct {
 }
 
 func (s *Subscriber) Cancel() {
-	logrus.Warn("CANCEL ", s.event, " ", s.uid)
 	close(s.C)
 	s.C = nil
 
@@ -20,5 +17,3 @@ func (s *Subscriber) Cancel() {
 func (s Subscriber) Channel() chan interface{} {
 	return s.C
 }
-
-var _ *Subscriber = &Subscriber{}

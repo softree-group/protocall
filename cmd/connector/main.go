@@ -1,18 +1,27 @@
 package main
 
 import (
-	"protocall/internal/connector/application"
-	"protocall/internal/connector/config"
-	"protocall/internal/connector/handlers"
+	"flag"
+	"log"
+	"os"
+
+	"protocall/pkg/logger"
+)
+
+var (
+	configPath = flag.String("f", "", "path to configuration file")
 )
 
 func main() {
-	config.InitConfig()
-
-	app := application.New(handlers.NewHandler())
-
-	go handlers.ServeAPI(app)
-	go app.Snoopy.Snoop()
-	go app.ApplicationEventListener.Listen()
-	app.Listener.Listen()
+	flag.Parse()
+	if *configPath == "" {
+		flag.Usage()
+		os.Exit(1)
+	}
+	cfg, err := config(*configPath)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	logger.NewLogger(&cfg.Logger)
+	logger.L.Info(app())
 }

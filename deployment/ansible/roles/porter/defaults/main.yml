@@ -1,7 +1,0 @@
----
-configs:
-  - { src: "porter.service", dest: "/lib/systemd/system" }
-  - { src: ".env", dest: "/run/porter" }
-  - { src: "config.yml", dest: "/etc/porter" }
-
-service_name: porter
