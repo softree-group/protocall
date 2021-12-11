@@ -10,6 +10,7 @@ import (
 
 type Conference struct {
 	ID           string       `json:"id"`
+	Title        string       `json:"title"`
 	Participants *btree.BTree `json:"participants"`
 	HostUserID   string       `json:"host_user_id"`
 	BridgeID     string       `json:"-"`
@@ -17,9 +18,10 @@ type Conference struct {
 	Start        time.Time
 }
 
-func NewConference(id, hostUser string) *Conference {
+func NewConference(id, hostUser, title string) *Conference {
 	return &Conference{
 		ID:           id,
+		Title:        title,
 		Participants: btree.New(viper.GetInt(config.Participant)),
 		HostUserID:   hostUser,
 		BridgeID:     id,

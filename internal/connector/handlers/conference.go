@@ -26,7 +26,15 @@ func start(ctx *fasthttp.RequestCtx, apps *application.Applications) {
 		return
 	}
 
-	conference, err := apps.Conference.StartConference(user)
+	requestData := map[string]interface{}{}
+	json.Unmarshal(ctx.Request.Body(), &requestData)
+	title, ok := requestData["title"]
+	if !ok {
+		ctx.Error("No title specified", fasthttp.StatusBadRequest)
+		return
+	}
+
+	conference, err := apps.Conference.StartConference(user, title.(string))
 	if err != nil {
 		ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
 		return

@@ -5,7 +5,7 @@ import (
 )
 
 type Conference interface {
-	StartConference(user *entity.User) (*entity.Conference, error)
+	StartConference(user *entity.User, title string) (*entity.Conference, error)
 	JoinToConference(user *entity.User, meetID string) (*entity.Conference, error)
 	IsExist(meetID string) bool
 	StartRecord(user *entity.User, meetID string) error

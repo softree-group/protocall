@@ -49,9 +49,9 @@ func (c *Conference) RemoveParticipant(user *entity.User, meetID string) {
 	}
 }
 
-func (c *Conference) StartConference(user *entity.User) (*entity.Conference, error) {
+func (c *Conference) StartConference(user *entity.User, title string) (*entity.Conference, error) {
 	id, _ := uuid.GenerateUUID()
-	conference := entity.NewConference(id, user.AsteriskAccount)
+	conference := entity.NewConference(id, user.AsteriskAccount, title)
 	conference.Participants.ReplaceOrInsert(user)
 	user.ConferenceID = id
 	c.reps.SaveUser(user)
